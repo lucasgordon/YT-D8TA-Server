@@ -106,7 +106,7 @@ class Video < ApplicationRecord
             # Find the video by the youtube_id from the views data
             video = find_by(youtube_id: video_data["youtube_id"])
             next unless video  # Skip if video not found
-            
+
             view = video.views.find_or_initialize_by(date: view_data["date"])
             view.assign_attributes(
               millis_data: view_data["millis_data"],
