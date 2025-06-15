@@ -38,6 +38,3 @@
 
 # YouTube cookies
 lib/python_scripts/youtube_cookies.json
-
-# Chrome profile data
-lib/python_scripts/chrome_profile/
