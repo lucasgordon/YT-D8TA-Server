@@ -20,6 +20,13 @@ gem "solid_cache"
 gem "solid_queue"
 gem "solid_cable"
 
+# Headless Chrome driver
+gem "ferrum", "~> 0.15"
+# For HTML parsing
+gem "nokogiri", ">= 1.12"
+# For YAML/JSON parsing (if needed)
+gem "oj", "~> 3.16"
+
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
@@ -28,6 +35,9 @@ gem "kamal", require: false
 
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false
+
+# For environment variables
+gem "dotenv-rails"
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"

@@ -30,3 +30,11 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# YouTube cookies
+lib/python_scripts/youtube_cookies.json
