@@ -100,12 +100,13 @@ class Video < ApplicationRecord
         video.save!
 
         # Process views data
+        puts "views: #{result["views"]["youtube_id"]}"
         if result["views"] && result["views"][video_data["youtube_id"]]
           result["views"][video_data["youtube_id"]].each do |view_data|
             # Find the video by the youtube_id from the views data
             video = find_by(youtube_id: video_data["youtube_id"])
             next unless video  # Skip if video not found
-
+            
             view = video.views.find_or_initialize_by(date: view_data["date"])
             view.assign_attributes(
               millis_data: view_data["millis_data"],

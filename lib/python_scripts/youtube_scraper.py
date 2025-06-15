@@ -278,7 +278,8 @@ def check_auth_state():
                     all_data['videos'].append(video_data)
 
                     # Update views body with current video ID
-                    views_body['videoId'] = video_id
+                    views_body['screenConfig']['entity']['videoId'] = video_id
+                    print(f"Debug - Updated views body with video ID: {video_id}")
 
                     # Request views for this video
                     fetch_views_script = f"""
@@ -310,7 +311,6 @@ def check_auth_state():
 
                     # Process views data
                     views_data = json.loads(views_result['text'])
-                    video_views_id = views_data['cards'][1]['sideEntities']['videos'][0]['entityData']['videoId']
                     external_views_data = views_data['cards'][1]['keyMetricCardData']['keyMetricTabs'][0]['primaryContent']['mainSeries']['datums']
                     
                     # Convert timestamps to dates and store views
@@ -324,8 +324,9 @@ def check_auth_state():
                             'daily_view_count': datum['y']
                         })
                     
-                    # Store views using the video_views_id from the API response
-                    all_data['views'][video_views_id] = views
+                    # Store views using the video_id from the API response
+                    all_data['views'][video_id] = views
+                    print(f"Debug - Stored views for video {video_id}: {len(views)} data points")
 
                     # Small delay between requests
                     time.sleep(1)
@@ -333,6 +334,8 @@ def check_auth_state():
                 response.set_data({'videos': all_data['videos'], 'views': all_data['views']})
             except Exception as e:
                 print(f"Error fetching data: {str(e)}")  # Debug log
+                print(f"Error type: {type(e)}")  # Print error type
+                print(f"Full error details: {traceback.format_exc()}")  # Print full traceback
                 response.add_message(f"Error fetching data: {str(e)}")
             
         print(f"Final auth state: {response.auth_state}")  # Debug log
@@ -537,7 +540,8 @@ def fetch_youtube_data(username: str = None, password: str = None, two_fa_code: 
             all_data['videos'].append(video_data)
 
             # Update views body with current video ID
-            views_body['videoId'] = video_id
+            views_body['screenConfig']['entity']['videoId'] = video_id
+            print(f"Debug - Updated views body with video ID: {video_id}")
 
             # Request views for this video
             fetch_views_script = f"""
@@ -569,7 +573,6 @@ def fetch_youtube_data(username: str = None, password: str = None, two_fa_code: 
 
             # Process views data
             views_data = json.loads(views_result['text'])
-            video_views_id = views_data['cards'][1]['sideEntities']['videos'][0]['entityData']['videoId']
             external_views_data = views_data['cards'][1]['keyMetricCardData']['keyMetricTabs'][0]['primaryContent']['mainSeries']['datums']
             
             # Convert timestamps to dates and store views
@@ -583,8 +586,10 @@ def fetch_youtube_data(username: str = None, password: str = None, two_fa_code: 
                     'daily_view_count': datum['y']
                 })
             
-            # Store views using the video_views_id from the API response
-            all_data['views'][video_views_id] = views
+            # Store views using the video_id from the API response
+            all_data['views'][video_id] = views
+            print(f"Debug - Stored views for video {video_id}: {len(views)} data points")
+            print(f"Debug - Current views data structure: {all_data['views']}")
 
             # Small delay between requests
             time.sleep(1)
