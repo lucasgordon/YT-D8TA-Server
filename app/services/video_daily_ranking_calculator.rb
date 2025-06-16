@@ -32,7 +32,7 @@ class VideoDailyRankingCalculator
     # Cumulative rankings
     cumulative_videos.each_with_index do |video, idx|
       cumulative_position = idx + 1
-      cumulative_percentile = (cumulative_position - 1).to_f / cumulative_total
+      cumulative_percentile = ((cumulative_total - cumulative_position).to_f / cumulative_total).round(2)
       prev = prev_rankings[video.id]
       cumulative_rank_change = prev ? prev.cumulative_position - cumulative_position : nil
       cumulative_momentum = prev ? (prev.cumulative_rank_change || 0) + (cumulative_rank_change || 0) : nil
@@ -41,12 +41,12 @@ class VideoDailyRankingCalculator
       daily_idx = daily_videos.find_index { |v| v.id == video.id }
       if daily_idx
         daily_position = daily_idx + 1
-        daily_percentile = (daily_position - 1).to_f / daily_total
+        daily_percentile = ((daily_total - daily_position).to_f / daily_total).round(2)
         prev_daily_rank_change = prev ? prev.daily_position - daily_position : nil
         daily_momentum = prev ? (prev.daily_rank_change || 0) + (prev_daily_rank_change || 0) : nil
       else
         daily_position = daily_total + 1
-        daily_percentile = 1.0
+        daily_percentile = 0.00
         prev_daily_rank_change = nil
         daily_momentum = nil
       end
@@ -74,7 +74,7 @@ class VideoDailyRankingCalculator
   end
 
   def self.run_for_all_dates
-    start_date = Date.new(2022, 9, 22)
+    start_date = Date.new(2020, 12, 10)
     end_date = Date.today
     (start_date..end_date).each do |date|
       run_for_date(date)
