@@ -4,6 +4,7 @@ require "open3"
 class Video < ApplicationRecord
   has_many :views, foreign_key: :youtube_id, primary_key: :youtube_id, dependent: :destroy
   has_many :thumbnails, foreign_key: :youtube_id, primary_key: :youtube_id, dependent: :destroy
+  has_many :video_daily_rankings, dependent: :destroy
 
   validates :youtube_id, presence: true, uniqueness: true
   validates :title, presence: true
@@ -61,6 +62,10 @@ class Video < ApplicationRecord
     end
   end
 
+  def daily_rankings
+    video_daily_rankings.order(:date)
+  end
+
   private
 
   def self.process_result(result)
@@ -108,9 +113,19 @@ class Video < ApplicationRecord
             next unless video  # Skip if video not found
 
             view = video.views.find_or_initialize_by(date: view_data["date"])
+
+            # Calculate single_day_views as the difference between this day and previous day
+            previous_view = video.views.find_by(date: (Date.parse(view_data["date"]) - 1.day).strftime("%Y-%m-%d"))
+            single_day_views = if previous_view && view_data["daily_view_count"].to_i > 0
+              view_data["daily_view_count"].to_i - previous_view.daily_view_count.to_i
+            else
+              view_data["daily_view_count"].to_i
+            end
+
             view.assign_attributes(
               millis_data: view_data["millis_data"],
-              daily_view_count: view_data["daily_view_count"]
+              daily_view_count: view_data["daily_view_count"],
+              single_day_views: single_day_views
             )
             view.save!
           end

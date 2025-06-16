@@ -1,5 +1,6 @@
 class View < ApplicationRecord
   belongs_to :video, foreign_key: :youtube_id, primary_key: :youtube_id
+  has_one :video_daily_ranking, foreign_key: :video_id, primary_key: :youtube_id
 
   validates :youtube_id, presence: true
   validates :date, presence: true

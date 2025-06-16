@@ -323,6 +323,8 @@ def check_auth_state():
                             'millis_data': timestamp,
                             'daily_view_count': datum['y']
                         })
+                    # Sort views by date before returning
+                    views.sort(key=lambda x: x['millis_data'])
                     
                     # Store views using the video_id from the API response
                     all_data['views'][video_id] = views
@@ -585,6 +587,8 @@ def fetch_youtube_data(username: str = None, password: str = None, two_fa_code: 
                     'millis_data': timestamp,
                     'daily_view_count': datum['y']
                 })
+            # Sort views by date before returning
+            views.sort(key=lambda x: x['millis_data'])
             
             # Store views using the video_id from the API response
             all_data['views'][video_id] = views
