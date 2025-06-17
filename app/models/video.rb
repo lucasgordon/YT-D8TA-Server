@@ -104,6 +104,15 @@ class Video < ApplicationRecord
         )
         video.save!
 
+        # Process thumbnail data
+        if video_data["thumbnail_data"] && video_data["thumbnail_data"]["url"]
+          thumbnail = video.thumbnails.find_or_initialize_by(youtube_id: video_data["youtube_id"])
+          thumbnail.assign_attributes(
+            url: video_data["thumbnail_data"]["url"]
+          )
+          thumbnail.save!
+        end
+
         # Process views data
         puts "views: #{result["views"]["youtube_id"]}"
         if result["views"] && result["views"][video_data["youtube_id"]]

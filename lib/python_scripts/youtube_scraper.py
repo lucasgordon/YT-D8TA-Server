@@ -249,7 +249,7 @@ def check_auth_state():
                 videos_data = json.loads(videos_result['text'])
                 next_page_token = videos_data.get('nextPageToken')
                 print(f"API Response: {json.dumps(videos_data, indent=2)}")  # Add debug logging
-                all_data = {'videos': [], 'views': {}}
+                all_data = {'videos': [], 'views': {}, 'thumbnails': []}
 
                 # Process first page of videos
                 for video in videos_data.get('videos', []):
@@ -274,7 +274,10 @@ def check_auth_state():
                         'comment_count': video.get('publicMetrics', {}).get('commentCount', ''),
                         'like_count': video.get('publicMetrics', {}).get('likeCount', ''),
                         'external_view_count': video.get('publicMetrics', {}).get('externalViewCount', ''),
-                        'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False)
+                        'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False),
+                        'thumbnail_data': {
+                            'url': video.get('thumbnailDetails', {}).get('thumbnails', [])[-1].get('url') if video.get('thumbnailDetails', {}).get('thumbnails') else None
+                        }
                     }
                     all_data['videos'].append(video_data)
 
@@ -333,7 +336,10 @@ def check_auth_state():
                                 'comment_count': video.get('publicMetrics', {}).get('commentCount', ''),
                                 'like_count': video.get('publicMetrics', {}).get('likeCount', ''),
                                 'external_view_count': video.get('publicMetrics', {}).get('externalViewCount', ''),
-                                'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False)
+                                'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False),
+                                'thumbnail_data': {
+                                    'url': video.get('thumbnailDetails', {}).get('thumbnails', [])[-1].get('url') if video.get('thumbnailDetails', {}).get('thumbnails') else None
+                                }
                             }
                             all_data['videos'].append(video_data)
 
@@ -577,7 +583,7 @@ def fetch_youtube_data(username: str = None, password: str = None, two_fa_code: 
         videos_data = json.loads(videos_result['text'])
         next_page_token = videos_data.get('nextPageToken')
         print(f"API Response: {json.dumps(videos_data, indent=2)}")  # Add debug logging
-        all_data = {'videos': [], 'views': {}}
+        all_data = {'videos': [], 'views': {}, 'thumbnails': []}
 
         # Process first page of videos
         for video in videos_data.get('videos', []):
@@ -602,7 +608,10 @@ def fetch_youtube_data(username: str = None, password: str = None, two_fa_code: 
                 'comment_count': video.get('publicMetrics', {}).get('commentCount', ''),
                 'like_count': video.get('publicMetrics', {}).get('likeCount', ''),
                 'external_view_count': video.get('publicMetrics', {}).get('externalViewCount', ''),
-                'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False)
+                'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False),
+                'thumbnail_data': {
+                    'url': video.get('thumbnailDetails', {}).get('thumbnails', [])[-1].get('url') if video.get('thumbnailDetails', {}).get('thumbnails') else None
+                }
             }
             all_data['videos'].append(video_data)
 
@@ -661,7 +670,10 @@ def fetch_youtube_data(username: str = None, password: str = None, two_fa_code: 
                         'comment_count': video.get('publicMetrics', {}).get('commentCount', ''),
                         'like_count': video.get('publicMetrics', {}).get('likeCount', ''),
                         'external_view_count': video.get('publicMetrics', {}).get('externalViewCount', ''),
-                        'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False)
+                        'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False),
+                        'thumbnail_data': {
+                            'url': video.get('thumbnailDetails', {}).get('thumbnails', [])[-1].get('url') if video.get('thumbnailDetails', {}).get('thumbnails') else None
+                        }
                     }
                     all_data['videos'].append(video_data)
 
