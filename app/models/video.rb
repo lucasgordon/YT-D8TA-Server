@@ -5,6 +5,7 @@ class Video < ApplicationRecord
   has_many :views, foreign_key: :youtube_id, primary_key: :youtube_id, dependent: :destroy
   has_many :thumbnails, foreign_key: :youtube_id, primary_key: :youtube_id, dependent: :destroy
   has_many :video_daily_rankings, dependent: :destroy
+  has_many :video_results_since_published, dependent: :destroy
 
   validates :youtube_id, presence: true, uniqueness: true
   validates :title, presence: true
