@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>YouTube Data Project</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="min-h-screen bg-gray-50">
+    <header class="bg-white shadow">
+      <nav class="container mx-auto px-4 py-4">
+        <h1 class="text-2xl font-bold text-gray-800">YouTube Data Project</h1>
+      </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+      <%= yield %>
+    </main>
+
+    <footer class="bg-white shadow mt-8">
+      <div class="container mx-auto px-4 py-6">
+        <p class="text-center text-gray-600">&copy; <%= Time.current.year %> YouTube Data Project</p>
+      </div>
+    </footer>
+  </body>
+</html> 
