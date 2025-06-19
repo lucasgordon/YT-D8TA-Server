@@ -86,10 +86,17 @@ class Video < ApplicationRecord
     if result["videos"]
       result["videos"].each do |video_data|
         video = find_or_initialize_by(youtube_id: video_data["youtube_id"])
+
+        # Calculate date_published first to check if we should skip this record
+        date_published = Time.at(video_data["date_published"].to_i)
+
+        # Skip videos published before 2020
+        next if date_published < Time.new(2020, 1, 1)
+
         video.assign_attributes(
           title: video_data["title"],
           description: video_data["description"],
-          date_published: Time.at(video_data["date_published"].to_i),
+          date_published: date_published,
           channel_id: video_data["channel_id"],
           draft_status: video_data["draft_status"],
           length_seconds: video_data["length_seconds"],
