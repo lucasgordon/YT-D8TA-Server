@@ -50,4 +50,43 @@ class VideosController < ApplicationController
       .where(days_since_published: @selected_days - 1)
       .index_by(&:video_id)
   end
+
+  def show
+    @video = Video.find(params[:id])
+
+    # Get the selected date for daily rankings (default to today or latest available)
+    @selected_date = params[:selected_date]&.to_date || @video.video_daily_rankings.maximum(:date) || Date.today
+
+    # Get available dates for the date selector
+    @available_dates = @video.video_daily_rankings.order(:date).pluck(:date)
+
+    # Get the latest ranking data
+    @latest_ranking = @video.video_results_since_published.order(:days_since_published).last
+
+    # Get daily ranking for the selected date
+    @selected_daily_ranking = @video.video_daily_rankings.find_by(date: @selected_date)
+
+    # Get daily rankings for the last 30 days
+    @daily_rankings = @video.video_daily_rankings.order(:date).last(30)
+
+    # Get view data for the last 30 days
+    @recent_views = @video.views.order(:date).last(30)
+
+    # Calculate view statistics from the video table (not timeseries)
+    @total_views = @video.view_count.to_i
+    @avg_daily_views = @video.views.average(:single_day_views)&.round(0) || 0
+
+    # Get max daily views and its date
+    max_view_record = @video.views.where("single_day_views > 0").order(:single_day_views).last
+    @max_daily_views = max_view_record&.single_day_views || 0
+    @max_daily_views_date = max_view_record&.date
+
+    # Get min daily views (excluding 0) and its date
+    min_view_record = @video.views.where("single_day_views > 0").order(:single_day_views).first
+    @min_daily_views = min_view_record&.single_day_views || 0
+    @min_daily_views_date = min_view_record&.date
+
+    # Get thumbnail
+    @thumbnail = @video.thumbnails.first
+  end
 end

@@ -254,7 +254,7 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <% @video_rankings.each do |ranking| %>
-              <tr class="hover:bg-gray-50">
+              <tr class="hover:bg-gray-50 cursor-pointer" onclick="handleRowClick(event, '<%= video_path(ranking.video) %>')">
                 <!-- Ranking Badge -->
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
@@ -281,7 +281,7 @@
                            data-comments="<%= number_with_delimiter(ranking.video.comment_count) %>"
                            data-likes="<%= number_with_delimiter(ranking.video.like_count) %>"
                            data-published="<% if ranking.video.date_published.present? %><%= Date.parse(ranking.video.date_published).strftime("%b %-d, %Y") %><% else %>-<% end %>"
-                           onclick="window.open('<%= ranking.video.watch_url %>', '_blank')">
+                           onclick="event.stopPropagation(); window.open('<%= ranking.video.watch_url %>', '_blank')">
                     <% else %>
                       <div class="h-10 w-18 bg-gray-200 rounded-lg flex items-center justify-center cursor-pointer thumbnail-tooltip"
                            data-video-id="<%= ranking.video.youtube_id %>"
@@ -290,7 +290,7 @@
                            data-comments="<%= number_with_delimiter(ranking.video.comment_count) %>"
                            data-likes="<%= number_with_delimiter(ranking.video.like_count) %>"
                            data-published="<% if ranking.video.date_published.present? %><%= Date.parse(ranking.video.date_published).strftime("%b %-d, %Y") %><% else %>-<% end %>"
-                           onclick="window.open('<%= ranking.video.watch_url %>', '_blank')">
+                           onclick="event.stopPropagation(); window.open('<%= ranking.video.watch_url %>', '_blank')">
                         <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
@@ -304,7 +304,8 @@
                   <div class="text-sm font-medium text-gray-900">
                     <a href="<%= ranking.video.watch_url %>" 
                        target="_blank" 
-                       class="hover:text-blue-600 hover:underline">
+                       class="hover:text-blue-600 hover:underline"
+                       onclick="event.stopPropagation()">
                       <%= truncate(ranking.video.title, length: 60) %>
                     </a>
                   </div>
@@ -576,5 +577,16 @@
     
     // Navigate to the new URL
     window.location.href = url.toString();
+  }
+
+  // Row click handler for navigation to video show page
+  function handleRowClick(event, videoPath) {
+    // Don't navigate if clicking on elements that have their own click handlers
+    if (event.target.closest('a') || event.target.closest('.thumbnail-tooltip')) {
+      return;
+    }
+    
+    // Navigate to the video show page
+    window.location.href = videoPath;
   }
 </script>
