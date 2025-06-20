@@ -28,7 +28,7 @@
     <div class="px-6 py-4 border-b border-gray-200">
       <h2 class="text-xl font-semibold">Video Rankings</h2>
       <p class="text-sm text-gray-600 mt-1">
-        Showing <%= @video_rankings.offset_value + 1 %>-<%= @video_rankings.offset_value + @video_rankings.length %> of <%= @total_videos %> videos
+        Showing <span class="number-font"><%= @video_rankings.offset_value + 1 %></span>-<span class="number-font"><%= @video_rankings.offset_value + @video_rankings.length %></span> of <span class="number-font"><%= @total_videos %></span> videos
       </p>
     </div>
 
@@ -258,7 +258,7 @@
                 <!-- Ranking Badge -->
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium number-font
                                  <%= ranking.rank <= 10 ? 'bg-green-100 text-green-800' : 
                                      ranking.rank <= 50 ? 'bg-blue-100 text-blue-800' : 
                                      ranking.rank <= 100 ? 'bg-yellow-100 text-yellow-800' : 
@@ -312,7 +312,7 @@
                 </td>
 
                 <!-- Views Since Published -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
                   <%= number_with_delimiter(ranking.views_since_published) %>
                 </td>
 
@@ -326,7 +326,7 @@
                 </td>
 
                 <!-- Percentile -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
                   <%= number_with_precision(ranking.percentile, precision: 1) %>%
                 </td>
 
@@ -341,12 +341,12 @@
                         <svg class="h-4 w-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                         </svg>
-                        <span class="text-sm text-green-600">+<%= change.abs %> positions</span>
+                        <span class="text-sm text-green-600"><span class="number-font">+<%= change.abs %></span> positions</span>
                       <% elsif change < -2 %>
                         <svg class="h-4 w-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                         </svg>
-                        <span class="text-sm text-red-600">-<%= change.abs %> positions</span>
+                        <span class="text-sm text-red-600"><span class="number-font">-<%= change.abs %></span> positions</span>
                       <% else %>
                         <svg class="h-4 w-4 text-gray-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
@@ -368,17 +368,17 @@
                         <svg class="h-4 w-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                         </svg>
-                        <span class="text-sm text-green-600">+<%= change.abs %></span>
+                        <span class="text-sm text-green-600 number-font">+<%= change.abs %></span>
                       <% elsif change < -2 %>
                         <svg class="h-4 w-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                         </svg>
-                        <span class="text-sm text-red-600">-<%= change.abs %></span>
+                        <span class="text-sm text-red-600 number-font">-<%= change.abs %></span>
                       <% else %>
                         <svg class="h-4 w-4 text-gray-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
                         </svg>
-                        <span class="text-sm text-gray-600">0</span>
+                        <span class="text-sm text-gray-600 number-font">0</span>
                       <% end %>
                     </div>
                   <% else %>
@@ -387,7 +387,7 @@
                 </td>
 
                 <!-- Rank Slope Since Day 1 -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
                   <% if ranking.rank_slope_since_day_1 %>
                     <span class="<%= ranking.rank_slope_since_day_1 > 0 ? 'text-green-600' : ranking.rank_slope_since_day_1 < 0 ? 'text-red-600' : 'text-gray-600' %>">
                       <%= number_with_precision(ranking.rank_slope_since_day_1, precision: 2) %>
@@ -398,7 +398,7 @@
                 </td>
 
                 <!-- Percentile Change Since Day 1 -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
                   <% if @selected_days == 1 %>
                     <span class="text-sm text-gray-400">-</span>
                   <% elsif ranking.percentile_change_since_day_1 %>
@@ -411,7 +411,7 @@
                 </td>
 
                 <!-- Three Day Smoothed Average Rank Change -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
                   <% if ranking.three_day_smoothed_average_rank_change %>
                     <span class="<%= ranking.three_day_smoothed_average_rank_change > 0 ? 'text-green-600' : ranking.three_day_smoothed_average_rank_change < 0 ? 'text-red-600' : 'text-gray-600' %>">
                       <%= ranking.three_day_smoothed_average_rank_change > 0 ? '+' : '' %><%= ranking.three_day_smoothed_average_rank_change %>

@@ -63,18 +63,108 @@ class VideosController < ApplicationController
     # Get the latest ranking data
     @latest_ranking = @video.video_results_since_published.order(:days_since_published).last
 
-    # Get daily ranking for the selected date
-    @selected_daily_ranking = @video.video_daily_rankings.find_by(date: @selected_date)
+    # Get daily ranking for the selected date - calculate days since published
+    if @video.date_published.present?
+      days_since_published = (@selected_date - @video.date_published.to_date).to_i
+      @selected_daily_ranking = @video.video_results_since_published.find_by(days_since_published: days_since_published)
+    else
+      @selected_daily_ranking = nil
+    end
 
-    # Get daily rankings for the last 30 days
-    @daily_rankings = @video.video_daily_rankings.order(:date).last(30)
+    # Get all video results since published for the performance over time chart
+    @performance_over_time = @video.video_results_since_published
+      .order(:days_since_published)
 
-    # Get view data for the last 30 days
-    @recent_views = @video.views.order(:date).last(30)
+    # Determine available time range options based on data
+    @available_time_ranges = []
+
+    # Check if we have daily rankings data
+    if @video.video_daily_rankings.any?
+      earliest_date = @video.video_daily_rankings.minimum(:date)
+      days_of_data = (Date.today - earliest_date).to_i if earliest_date
+
+      @available_time_ranges << "30_days" if days_of_data && days_of_data >= 30
+      @available_time_ranges << "90_days" if days_of_data && days_of_data >= 90
+      @available_time_ranges << "1_year" if days_of_data && days_of_data >= 365
+    end
+
+    # Always show "since published" if we have any performance data
+    @available_time_ranges << "since_published" if @performance_over_time.any?
+
+    # If no ranges are available, default to 30 days
+    @available_time_ranges = [ "30_days" ] if @available_time_ranges.empty?
+
+    # Ensure the selected time range is available, otherwise use the first available
+    @chart_time_range = params[:chart_time_range] || @available_time_ranges.first
+    @chart_time_range = @available_time_ranges.first unless @available_time_ranges.include?(@chart_time_range)
+
+    # Calculate the start date based on the selected time range
+    case @chart_time_range
+    when "90_days"
+      @chart_start_date = 90.days.ago.to_date
+    when "1_year"
+      @chart_start_date = 1.year.ago.to_date
+    when "since_published"
+      @chart_start_date = @video.date_published&.to_date || 1.year.ago.to_date
+    else # '30_days' default
+      @chart_start_date = 30.days.ago.to_date
+    end
+
+    # Get daily rankings for the selected time range
+    @daily_rankings = @video.video_daily_rankings
+      .where("date >= ?", @chart_start_date)
+      .order(:date)
+
+    # Get view data for the selected time range
+    @recent_views = @video.views
+      .where("date >= ?", @chart_start_date)
+      .order(:date)
+
+    # Calculate trend insights
+    if @performance_over_time.any?
+      # Calculate rank trend (positive means improving rank, negative means declining)
+      first_rank = @performance_over_time.first.rank
+      last_rank = @performance_over_time.last.rank
+      @rank_trend = first_rank - last_rank
+      @rank_trend_direction = @rank_trend > 0 ? "improving" : @rank_trend < 0 ? "declining" : "stable"
+
+      # Calculate percentile trend
+      first_percentile = @performance_over_time.first.percentile
+      last_percentile = @performance_over_time.last.percentile
+      @percentile_trend = last_percentile - first_percentile
+      @percentile_trend_direction = @percentile_trend > 0 ? "improving" : @percentile_trend < 0 ? "declining" : "stable"
+
+      # Find peak performance day
+      @peak_performance = @performance_over_time.order(:rank).first
+
+      # Calculate average daily rank change
+      rank_changes = @performance_over_time.where.not(rank_change_since_day_1: nil).pluck(:rank_change_since_day_1)
+      @avg_daily_rank_change = rank_changes.any? ? rank_changes.sum.to_f / rank_changes.length : 0
+    end
+
+    # Calculate median daily views
+    daily_views_array = @video.views.pluck(:single_day_views).compact.sort
+    if daily_views_array.length > 0
+      if daily_views_array.length.odd?
+        @median_daily_views = daily_views_array[daily_views_array.length / 2]
+      else
+        mid = daily_views_array.length / 2
+        @median_daily_views = (daily_views_array[mid - 1] + daily_views_array[mid]) / 2.0
+      end
+    else
+      @median_daily_views = 0
+    end
 
     # Calculate view statistics from the video table (not timeseries)
     @total_views = @video.view_count.to_i
     @avg_daily_views = @video.views.average(:single_day_views)&.round(0) || 0
+
+    # Calculate how this video compares to all other videos in terms of total views
+    @total_videos_count = Video.count
+    @videos_with_more_views = Video.where("view_count > ?", @video.view_count).count
+    @videos_with_less_views = Video.where("view_count < ?", @video.view_count).count
+    @view_rank = @videos_with_more_views + 1
+    @view_percentile = ((@total_videos_count - @view_rank + 1).to_f / @total_videos_count * 100).round(1)
 
     # Get max daily views and its date
     max_view_record = @video.views.where("single_day_views > 0").order(:single_day_views).last
