@@ -60,8 +60,11 @@
                   </div>
                 </div>
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Video
+              <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Thumbnail
+              </th>
+              <th id="title_column_header" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Video Title
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" 
                   onclick="sortTable('views_since_published')">
@@ -265,37 +268,45 @@
                   </div>
                 </td>
 
-                <!-- Video Title -->
-                <td class="px-6 py-4">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10">
-                      <% if ranking.video.thumbnails.any? %>
-                        <img class="h-10 w-10 rounded-lg object-cover" 
-                             src="<%= ranking.video.thumbnails.first.url %>" 
-                             alt="Video thumbnail">
-                      <% else %>
-                        <div class="h-10 w-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      <% end %>
-                    </div>
-                    <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900 relative">
-                        <a href="<%= ranking.video.watch_url %>" 
-                           target="_blank" 
-                           class="hover:text-blue-600 hover:underline cursor-pointer video-title-link"
+                <!-- Thumbnail -->
+                <td class="px-2 py-4 whitespace-nowrap">
+                  <div class="flex-shrink-0 h-10 w-18">
+                    <% if ranking.video.thumbnails.any? %>
+                      <img class="h-12 w-21 rounded-lg object-cover cursor-pointer thumbnail-tooltip" 
+                           src="<%= ranking.video.thumbnails.first.url %>" 
+                           alt="Video thumbnail"
                            data-video-id="<%= ranking.video.youtube_id %>"
                            data-views="<%= number_with_delimiter(ranking.video.view_count) %>"
                            data-length="<% if ranking.video.length_seconds.present? %><% seconds = ranking.video.length_seconds.to_i %><% minutes = seconds / 60 %><% remaining_seconds = seconds % 60 %><%= "#{minutes}:#{remaining_seconds.to_s.rjust(2, '0')}" %><% else %>-<% end %>"
                            data-comments="<%= number_with_delimiter(ranking.video.comment_count) %>"
                            data-likes="<%= number_with_delimiter(ranking.video.like_count) %>"
-                           data-published="<% if ranking.video.date_published.present? %><%= Date.parse(ranking.video.date_published).strftime("%b %-d, %Y") %><% else %>-<% end %>">
-                          <%= truncate(ranking.video.title, length: 60) %>
-                        </a>
+                           data-published="<% if ranking.video.date_published.present? %><%= Date.parse(ranking.video.date_published).strftime("%b %-d, %Y") %><% else %>-<% end %>"
+                           onclick="window.open('<%= ranking.video.watch_url %>', '_blank')">
+                    <% else %>
+                      <div class="h-10 w-18 bg-gray-200 rounded-lg flex items-center justify-center cursor-pointer thumbnail-tooltip"
+                           data-video-id="<%= ranking.video.youtube_id %>"
+                           data-views="<%= number_with_delimiter(ranking.video.view_count) %>"
+                           data-length="<% if ranking.video.length_seconds.present? %><% seconds = ranking.video.length_seconds.to_i %><% minutes = seconds / 60 %><% remaining_seconds = seconds % 60 %><%= "#{minutes}:#{remaining_seconds.to_s.rjust(2, '0')}" %><% else %>-<% end %>"
+                           data-comments="<%= number_with_delimiter(ranking.video.comment_count) %>"
+                           data-likes="<%= number_with_delimiter(ranking.video.like_count) %>"
+                           data-published="<% if ranking.video.date_published.present? %><%= Date.parse(ranking.video.date_published).strftime("%b %-d, %Y") %><% else %>-<% end %>"
+                           onclick="window.open('<%= ranking.video.watch_url %>', '_blank')">
+                        <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
                       </div>
-                    </div>
+                    <% end %>
+                  </div>
+                </td>
+
+                <!-- Video Title -->
+                <td id="title_column_cell" class="px-6 py-4">
+                  <div class="text-sm font-medium text-gray-900">
+                    <a href="<%= ranking.video.watch_url %>" 
+                       target="_blank" 
+                       class="hover:text-blue-600 hover:underline">
+                      <%= truncate(ranking.video.title, length: 60) %>
+                    </a>
                   </div>
                 </td>
 
@@ -475,19 +486,19 @@
       });
     }
 
-    // Tooltip functionality
-    const videoLinks = document.querySelectorAll('.video-title-link');
+    // Tooltip functionality for thumbnails
+    const thumbnailElements = document.querySelectorAll('.thumbnail-tooltip');
     const globalTooltip = document.getElementById('global-tooltip');
     
-    videoLinks.forEach(link => {
+    thumbnailElements.forEach(thumbnail => {
       // Show tooltip on mouse enter
-      link.addEventListener('mouseenter', function(e) {
+      thumbnail.addEventListener('mouseenter', function(e) {
         // Get tooltip data from data attributes
-        const views = link.getAttribute('data-views');
-        const length = link.getAttribute('data-length');
-        const comments = link.getAttribute('data-comments');
-        const likes = link.getAttribute('data-likes');
-        const published = link.getAttribute('data-published');
+        const views = thumbnail.getAttribute('data-views');
+        const length = thumbnail.getAttribute('data-length');
+        const comments = thumbnail.getAttribute('data-comments');
+        const likes = thumbnail.getAttribute('data-likes');
+        const published = thumbnail.getAttribute('data-published');
         
         // Populate tooltip content
         document.getElementById('tooltip-views').textContent = views;
@@ -497,10 +508,10 @@
         document.getElementById('tooltip-published').textContent = published;
         
         // Position tooltip
-        const rect = link.getBoundingClientRect();
+        const rect = thumbnail.getBoundingClientRect();
         const tooltipRect = globalTooltip.getBoundingClientRect();
         
-        // Calculate position - center horizontally on the link
+        // Calculate position - center horizontally on the thumbnail
         let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
         let top;
         
@@ -533,7 +544,7 @@
       });
       
       // Hide tooltip on mouse leave
-      link.addEventListener('mouseleave', function() {
+      thumbnail.addEventListener('mouseleave', function() {
         globalTooltip.classList.add('hidden');
       });
     });
