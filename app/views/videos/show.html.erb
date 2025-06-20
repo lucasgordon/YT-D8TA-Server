@@ -1,0 +1,1070 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header with back button -->
+    <div class="container mx-auto px-4 py-4">
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <a href="<%= videos_path %>" class="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              Back to Videos
+            </a>
+            <div class="h-6 w-px bg-gray-300"></div>
+            <h1 class="text-2xl font-bold text-gray-900">Video Details</h1>
+          </div>
+          <div class="flex items-center space-x-3">
+            <a href="<%= @video.watch_url %>" target="_blank" 
+               class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+              <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+              Watch
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  <div class="container mx-auto px-4 py-8">
+    <!-- Main Video Information Card -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-8">
+      <div class="md:flex">
+        <!-- Thumbnail Section -->
+        <div class="md:w-1/3">
+          <div class="relative h-full">
+            <% if @thumbnail %>
+              <!-- Blurred background -->
+              <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('<%= @thumbnail.url %>'); filter: blur(20px); opacity: 0.3;"></div>
+              <!-- Centered thumbnail -->
+              <div class="relative h-full flex items-center justify-center p-4">
+                <img src="<%= @thumbnail.url %>" alt="Video thumbnail" class="max-w-full max-h-full object-contain rounded-lg shadow-sm">
+              </div>
+            <% else %>
+              <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                <svg class="w-16 h-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+            <% end %>
+            <div class="absolute bottom-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm number-font">
+              <% if @video.length_seconds.present? %>
+                <% seconds = @video.length_seconds.to_i %>
+                <% minutes = seconds / 60 %>
+                <% remaining_seconds = seconds % 60 %>
+                <%= "#{minutes}:#{remaining_seconds.to_s.rjust(2, '0')}" %>
+              <% else %>
+                -
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video Details Section -->
+        <div class="md:w-2/3 p-6">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2"><%= @video.title %></h2>
+            <p class="text-gray-600 text-sm mb-4">
+              <% if @video.date_published.present? %>
+                <% published_date = @video.date_published.is_a?(Time) ? @video.date_published : Time.parse(@video.date_published) %>
+                Published <%= time_ago_in_words_custom(published_date.to_date) %>
+                <span class="text-gray-500">(<%= published_date.strftime("%B %d, %Y") %>)</span>
+              <% end %>
+            </p>
+            
+            <% if @video.description.present? %>
+              <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <h3 class="text-sm font-semibold text-gray-700 mb-2">Description</h3>
+                <div class="text-sm text-gray-600">
+                  <div id="description-preview" class="line-clamp-3">
+                    <%= truncate(@video.description, length: 300) %>
+                  </div>
+                  <div id="description-full" class="hidden">
+                    <%= simple_format(@video.description) %>
+                  </div>
+                  <button onclick="toggleDescription()" class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-2">
+                    <span id="expand-text">Read more</span>
+                    <span id="collapse-text" class="hidden">Read less</span>
+                  </button>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Boxes Below Thumbnail -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-8">
+      <div class="p-6">
+        <!-- Key Stats Grid -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <div class="flex flex-row items-center justify-center">
+              <div class="text-2xl font-bold text-gray-900 number-font">#<%= @view_rank %></div>
+            </div>
+            <div class="text-sm text-gray-600">View Rank</div>
+          </div>
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <div class="text-2xl font-bold text-gray-900 number-font"><%= number_with_delimiter(@video.view_count) %></div>
+            <div class="text-sm text-gray-600">Total Views</div>
+          </div>
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <div class="text-2xl font-bold text-gray-900 number-font"><%= number_with_delimiter(@video.like_count) %></div>
+            <div class="text-sm text-gray-600">Likes</div>
+          </div>
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <div class="text-2xl font-bold text-gray-900 number-font"><%= number_with_delimiter(@video.comment_count) %></div>
+            <div class="text-sm text-gray-600">Comments</div>
+          </div>
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <div class="text-2xl font-bold text-gray-900 flex flex-row items-center justify-center">
+              <% if @video.user_set_monetization == "VIDEO_USER_SET_MONETIZATION_ON" %>
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <div class="text-green-600 ml-2">On</div>
+              <% else %>
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                <div class="text-red-600 ml-2">Off</div>
+              <% end %>
+            </div>
+            <div class="text-sm text-gray-600">Monetization</div>
+          </div>
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <div class="text-2xl font-bold text-gray-900 flex flex-row items-center justify-center">
+              <% if @video.ad_friendly_review_decision == "AD_FRIENDLY_REVIEW_DECISION_SAFE" %>
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <div class="text-green-600 ml-2">Safe</div>
+              <% else %>
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                <div class="text-red-600 ml-2">Not Safe</div>
+              <% end %>
+            </div>
+            <div class="text-sm text-gray-600">Ad Friendly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Metrics Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <!-- Ranking Performance -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-bold text-gray-900 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+            </svg>
+            Ranking Performance
+          </h3>
+          
+          <% if @available_dates.any? %>
+            <div class="flex items-center space-x-2">
+              <select id="selected_date" name="selected_date" 
+                      class="border border-gray-300 rounded-md px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-64"
+                      onchange="updateDateSelection(this.value)">
+                <% @available_dates.each_with_index do |date, index| %>
+                  <% days_after_publish = (@video.date_published.present? ? (date - @video.date_published.to_date).to_i : 0) %>
+                  <% next if days_after_publish == 0 %>
+                  <option value="<%= date %>" <%= 'selected' if date == @selected_date %>>
+                    <%= days_after_publish %> days (<%= date.strftime("%b %d, %Y") %>)
+                  </option>
+                <% end %>
+              </select>
+            </div>
+          <% end %>
+        </div>
+        
+        <% if @selected_daily_ranking %>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+              <span class="font-medium text-gray-700">Rank</span>
+              <span class="text-lg font-bold text-gray-900 number-font">#<%= @selected_daily_ranking.rank %></span>
+            </div>
+            <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+              <span class="font-medium text-gray-700">Views Since Published</span>
+              <span class="text-lg font-bold text-gray-900 number-font"><%= number_with_delimiter(@selected_daily_ranking.views_since_published) %></span>
+            </div>
+            <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+              <span class="font-medium text-gray-700">Percentile</span>
+              <span class="text-lg font-bold text-gray-900 number-font"><%= number_with_precision(@selected_daily_ranking.percentile, precision: 1) %>%</span>
+            </div>
+            <% if @selected_daily_ranking.rank_change_since_day_1 %>
+              <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Rank Change</span>
+                <div class="flex items-center">
+                  <% change = @selected_daily_ranking.rank_change_since_day_1 %>
+                  <% if change > 2 %>
+                    <svg class="h-4 w-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-green-600"><span class="number-font">+<%= change.abs %></span> positions</span>
+                  <% elsif change < -2 %>
+                    <svg class="h-4 w-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-red-600"><span class="number-font">-<%= change.abs %></span> positions</span>
+                  <% else %>
+                    <svg class="h-4 w-4 text-gray-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-gray-600">Stable</span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            <% if @selected_daily_ranking.day_over_day_rank_change %>
+              <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Day Over Day Change</span>
+                <div class="flex items-center">
+                  <% change = @selected_daily_ranking.day_over_day_rank_change %>
+                  <% if change > 2 %>
+                    <svg class="h-4 w-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-green-600 number-font">+<%= change.abs %></span>
+                  <% elsif change < -2 %>
+                    <svg class="h-4 w-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-red-600 number-font">-<%= change.abs %></span>
+                  <% else %>
+                    <svg class="h-4 w-4 text-gray-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-gray-600">0</span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            <% if @selected_daily_ranking.rank_slope_since_day_1 %>
+              <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Rank Slope</span>
+                <div class="flex items-center">
+                  <% slope = @selected_daily_ranking.rank_slope_since_day_1 %>
+                  <% if slope > 0 %>
+                    <svg class="h-4 w-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-green-600 number-font"><%= number_with_precision(slope, precision: 2) %></span>
+                  <% elsif slope < 0 %>
+                    <svg class="h-4 w-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-red-600 number-font"><%= number_with_precision(slope, precision: 2) %></span>
+                  <% else %>
+                    <svg class="h-4 w-4 text-gray-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-gray-600 number-font"><%= number_with_precision(slope, precision: 2) %></span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            <% if @selected_daily_ranking.percentile_change_since_day_1 %>
+              <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Percentile Change</span>
+                <div class="flex items-center">
+                  <% change = @selected_daily_ranking.percentile_change_since_day_1 %>
+                  <% if change > 0 %>
+                    <svg class="h-4 w-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-green-600 number-font">+<%= number_with_precision(change, precision: 1) %>%</span>
+                  <% elsif change < 0 %>
+                    <svg class="h-4 w-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-red-600 number-font"><%= number_with_precision(change, precision: 1) %>%</span>
+                  <% else %>
+                    <svg class="h-4 w-4 text-gray-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-gray-600 number-font"><%= number_with_precision(change, precision: 1) %>%</span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            <% if @selected_daily_ranking.three_day_smoothed_average_rank_change %>
+              <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">3-Day Avg Change</span>
+                <div class="flex items-center">
+                  <% change = @selected_daily_ranking.three_day_smoothed_average_rank_change %>
+                  <% if change > 0 %>
+                    <svg class="h-4 w-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-green-600 number-font">+<%= change %></span>
+                  <% elsif change < 0 %>
+                    <svg class="h-4 w-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-red-600 number-font"><%= change %></span>
+                  <% else %>
+                    <svg class="h-4 w-4 text-gray-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-lg font-bold text-gray-600 number-font"><%= change %></span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% elsif @latest_ranking %>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+              <span class="font-medium text-gray-700">Current Rank</span>
+              <span class="text-2xl font-bold text-gray-900 number-font">#<%= @latest_ranking.rank %></span>
+            </div>
+            <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+              <span class="font-medium text-gray-700">Percentile</span>
+              <span class="text-xl font-semibold text-gray-900 number-font"><%= number_with_precision(@latest_ranking.percentile, precision: 1) %>%</span>
+            </div>
+            <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+              <span class="font-medium text-gray-700">Total Videos</span>
+              <span class="text-lg font-semibold text-gray-600 number-font"><%= number_with_delimiter(@latest_ranking.total_videos) %></span>
+            </div>
+            <% if @latest_ranking.rank_change_since_day_1 %>
+              <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Rank Change</span>
+                <span class="text-lg font-semibold text-gray-900 number-font">
+                  <%= @latest_ranking.rank_change_since_day_1 > 0 ? '+' : '' %><%= @latest_ranking.rank_change_since_day_1 %>
+                </span>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="text-center py-8 text-gray-500">
+            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <p>No ranking data available</p>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- View Statistics -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+          </svg>
+          View Statistics
+        </h3>
+        
+        <div class="space-y-4">
+          <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+            <span class="font-medium text-gray-700">Average Daily Views</span>
+            <span class="text-lg font-semibold text-gray-900 number-font"><%= number_with_delimiter(@avg_daily_views) %></span>
+          </div>
+          <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+            <span class="font-medium text-gray-700">Median Daily Views</span>
+            <span class="text-lg font-semibold text-gray-900 number-font"><%= number_with_delimiter(@median_daily_views.round(0)) %></span>
+          </div>
+          <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+            <span class="font-medium text-gray-700">Peak Daily Views</span>
+            <div class="text-right flex flex-row items-center">
+              <% if @max_daily_views_date %>
+                <div class="text-sm text-gray-500 mr-2 number-font"><%= Date.parse(@max_daily_views_date).strftime("%b %d, %Y") %></div>
+              <% end %>
+              <div class="text-lg font-semibold text-gray-900 number-font"><%= number_with_delimiter(@max_daily_views) %></div>
+            </div>
+          </div>
+          <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+            <span class="font-medium text-gray-700">Min Daily Views</span>
+            <div class="text-right flex flex-row items-center">
+              <% if @min_daily_views_date %>
+                <div class="text-sm text-gray-500 mr-2 number-font"><%= Date.parse(@min_daily_views_date).strftime("%b %d, %Y") %></div>
+              <% end %>
+              <div class="text-lg font-semibold text-gray-900 number-font"><%= number_with_delimiter(@min_daily_views) %></div>
+            </div>
+          </div>
+          <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+            <span class="font-medium text-gray-700">Days Tracked</span>
+            <span class="text-lg font-semibold text-gray-900 number-font"><%= @video.views.count %></span>
+          </div>
+          <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+            <span class="font-medium text-gray-700">Total Views Percentile</span>
+            <span class="text-lg font-semibold text-gray-900 number-font"><%= @view_percentile %>%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Insights Summary -->
+    <% if @performance_over_time.any? %>
+      <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-6">Performance Insights</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Best Rank -->
+          <div class="text-center p-4 bg-blue-50 rounded-t-lg md:rounded-tl-lg md:rounded-bl-lg lg:rounded-lg">
+            <div class="text-2xl font-bold text-blue-600 number-font">
+              #<%= @performance_over_time.minimum(:rank) %>
+            </div>
+            <div class="text-sm text-gray-600">Best Rank Achieved</div>
+            <% best_rank_record = @performance_over_time.order(:rank).first %>
+            <% if best_rank_record %>
+              <div class="text-xs text-gray-500 mt-1">
+                Day <%= best_rank_record.days_since_published %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Worst Rank -->
+          <div class="text-center p-4 bg-red-50 md:rounded-tr-lg md:rounded-br-lg lg:rounded-lg">
+            <div class="text-2xl font-bold text-red-600 number-font">
+              #<%= @performance_over_time.maximum(:rank) %>
+            </div>
+            <div class="text-sm text-gray-600">Worst Rank</div>
+            <% worst_rank_record = @performance_over_time.order(:rank).last %>
+            <% if worst_rank_record %>
+              <div class="text-xs text-gray-500 mt-1">
+                Day <%= worst_rank_record.days_since_published %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Best Percentile -->
+          <div class="text-center p-4 bg-green-50 md:rounded-tl-lg md:rounded-bl-lg lg:rounded-lg">
+            <div class="text-2xl font-bold text-green-600 number-font">
+              <%= number_with_precision(@performance_over_time.maximum(:percentile), precision: 1) %>%
+            </div>
+            <div class="text-sm text-gray-600">Best Percentile</div>
+            <% best_percentile_record = @performance_over_time.order(:percentile).last %>
+            <% if best_percentile_record %>
+              <div class="text-xs text-gray-500 mt-1">
+                Day <%= best_percentile_record.days_since_published %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Total Growth Period -->
+          <div class="text-center p-4 bg-purple-50 rounded-b-lg md:rounded-tr-lg md:rounded-br-lg lg:rounded-lg">
+            <div class="text-2xl font-bold text-purple-600 number-font">
+              <%= @performance_over_time.count %>
+            </div>
+            <div class="text-sm text-gray-600">Data Points</div>
+            <div class="text-xs text-gray-500 mt-1">
+              <%= @performance_over_time.maximum(:days_since_published) %> days tracked
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Trend Analysis -->
+    <% if @performance_over_time.any? && defined?(@rank_trend) %>
+      <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-6">Trend Analysis</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Overall Rank Trend -->
+          <div class="p-4 bg-gray-50 rounded-t-lg md:rounded-tl-lg md:rounded-bl-lg lg:rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-gray-700">Overall Rank Trend</span>
+              <div class="flex items-center">
+                <% if @rank_trend_direction == 'improving' %>
+                  <svg class="h-4 w-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                <% elsif @rank_trend_direction == 'declining' %>
+                  <svg class="h-4 w-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                <% else %>
+                  <svg class="h-4 w-4 text-gray-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                  </svg>
+                <% end %>
+                <span class="text-sm font-semibold <%= @rank_trend_direction == 'improving' ? 'text-green-600' : @rank_trend_direction == 'declining' ? 'text-red-600' : 'text-gray-600' %>">
+                  <%= @rank_trend_direction.capitalize %>
+                </span>
+              </div>
+            </div>
+            <div class="text-lg font-bold text-gray-900 number-font">
+              <%= @rank_trend > 0 ? '+' : '' %><%= @rank_trend %> positions
+            </div>
+            <div class="text-xs text-gray-500 mt-1">
+              From day 1 to day <%= @performance_over_time.last.days_since_published %>
+            </div>
+          </div>
+
+          <!-- Percentile Trend -->
+          <div class="p-4 bg-gray-50 md:rounded-tr-lg md:rounded-br-lg lg:rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-gray-700">Percentile Trend</span>
+              <div class="flex items-center">
+                <% if @percentile_trend_direction == 'improving' %>
+                  <svg class="h-4 w-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                <% elsif @percentile_trend_direction == 'declining' %>
+                  <svg class="h-4 w-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                <% else %>
+                  <svg class="h-4 w-4 text-gray-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                  </svg>
+                <% end %>
+                <span class="text-sm font-semibold <%= @percentile_trend_direction == 'improving' ? 'text-green-600' : @percentile_trend_direction == 'declining' ? 'text-red-600' : 'text-gray-600' %>">
+                  <%= @percentile_trend_direction.capitalize %>
+                </span>
+              </div>
+            </div>
+            <div class="text-lg font-bold text-gray-900 number-font">
+              <%= @percentile_trend > 0 ? '+' : '' %><%= number_with_precision(@percentile_trend, precision: 1) %>%
+            </div>
+            <div class="text-xs text-gray-500 mt-1">
+              From <%= number_with_precision(@performance_over_time.first.percentile, precision: 1) %>% to <%= number_with_precision(@performance_over_time.last.percentile, precision: 1) %>%
+            </div>
+          </div>
+
+          <!-- Average Daily Rank Change -->
+          <div class="p-4 bg-gray-50 rounded-b-lg md:col-span-2 lg:col-span-1 lg:rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-gray-700">Avg Daily Rank Change</span>
+            </div>
+            <div class="text-lg font-bold text-gray-900 number-font">
+              <%= @avg_daily_rank_change > 0 ? '+' : '' %><%= number_with_precision(@avg_daily_rank_change, precision: 2) %>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">
+              Average change per day since published
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Enhanced Performance Charts -->
+    <% if @daily_rankings.any? || @recent_views.any? || @performance_over_time.any? %>
+      <!-- Time Range Selector -->
+      <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-bold text-gray-900">Chart Time Range</h3>
+          <div class="flex items-center space-x-2">
+            <select id="chart_time_range" name="chart_time_range" 
+                    class="border border-gray-300 rounded-md px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onchange="updateChartTimeRange(this.value)">
+              <% if @available_time_ranges.include?('30_days') %>
+                <option value="30_days" <%= 'selected' if @chart_time_range == '30_days' %>>Last 30 Days</option>
+              <% end %>
+              <% if @available_time_ranges.include?('90_days') %>
+                <option value="90_days" <%= 'selected' if @chart_time_range == '90_days' %>>Last 90 Days</option>
+              <% end %>
+              <% if @available_time_ranges.include?('1_year') %>
+                <option value="1_year" <%= 'selected' if @chart_time_range == '1_year' %>>Last 1 Year</option>
+              <% end %>
+              <% if @available_time_ranges.include?('since_published') %>
+                <option value="since_published" <%= 'selected' if @chart_time_range == 'since_published' %>>Since Published</option>
+              <% end %>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Daily Rankings Chart -->
+        <% if @daily_rankings.any? %>
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Daily Rankings</h3>
+            <div class="h-64">
+              <canvas id="rankingsChart"></canvas>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Daily Views Chart -->
+        <% if @recent_views.any? %>
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Daily Views</h3>
+            <div class="h-64">
+              <canvas id="viewsChart"></canvas>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Performance Over Time Charts -->
+      <% if @performance_over_time.any? %>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <!-- Rank Over Time Chart -->
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Rank Performance Over Time</h3>
+            <div class="h-64">
+              <canvas id="rankOverTimeChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Percentile Over Time Chart -->
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Percentile Performance Over Time</h3>
+            <div class="h-64">
+              <canvas id="percentileOverTimeChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Views Since Published vs Rank Chart -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <h3 class="text-xl font-bold text-gray-900 mb-6">Views vs Rank Relationship</h3>
+          <div class="h-64">
+            <canvas id="viewsVsRankChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Additional Performance Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <!-- Rank Change Over Time Chart -->
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Rank Change Over Time</h3>
+            <div class="h-64">
+              <canvas id="rankChangeChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Cumulative Views Over Time Chart -->
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Cumulative Views Over Time</h3>
+            <div class="h-64">
+              <canvas id="cumulativeViewsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+
+  </div>
+</div>
+
+<% if @daily_rankings.any? || @recent_views.any? || @performance_over_time.any? %>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Rankings Chart
+    <% if @daily_rankings.any? %>
+      const rankingsCtx = document.getElementById('rankingsChart').getContext('2d');
+      new Chart(rankingsCtx, {
+        type: 'line',
+        data: {
+          labels: [<%= @daily_rankings.map { |r| "'#{r.date.strftime("%m/%d/%Y")}'" }.join(', ').html_safe %>],
+          datasets: [{
+            label: 'Daily Position',
+            data: [<%= @daily_rankings.map(&:daily_position).join(', ').html_safe %>],
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.1,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              reverse: true,
+              beginAtZero: false,
+              title: {
+                display: true,
+                text: 'Rank Position'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Date'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                title: function(context) {
+                  return 'Date: ' + context[0].label;
+                },
+                label: function(context) {
+                  return 'Rank: ' + context.parsed.y;
+                }
+              }
+            }
+          }
+        }
+      });
+    <% end %>
+
+    // Views Chart
+    <% if @recent_views.any? %>
+      const viewsCtx = document.getElementById('viewsChart').getContext('2d');
+      new Chart(viewsCtx, {
+        type: 'bar',
+        data: {
+          labels: [<%= @recent_views.map { |v| "'#{Date.parse(v.date).strftime("%m/%d/%Y")}'" }.join(', ').html_safe %>],
+          datasets: [{
+            label: 'Daily Views',
+            data: [<%= @recent_views.map(&:single_day_views).join(', ').html_safe %>],
+            backgroundColor: 'rgba(34, 197, 94, 0.8)',
+            borderColor: 'rgb(34, 197, 94)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Daily Views'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Date'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                title: function(context) {
+                  return 'Date: ' + context[0].label;
+                },
+                label: function(context) {
+                  return 'Views: ' + context.parsed.y.toLocaleString();
+                }
+              }
+            }
+          }
+        }
+      });
+    <% end %>
+
+    // Rank Over Time Chart
+    <% if @performance_over_time.any? %>
+      const rankOverTimeCtx = document.getElementById('rankOverTimeChart').getContext('2d');
+      new Chart(rankOverTimeCtx, {
+        type: 'line',
+        data: {
+          labels: [<%= @performance_over_time.map { |r| "'#{r.days_since_published} days'" }.join(', ').html_safe %>],
+          datasets: [{
+            label: 'Rank',
+            data: [<%= @performance_over_time.map(&:rank).join(', ').html_safe %>],
+            borderColor: 'rgb(239, 68, 68)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            tension: 0.1,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              reverse: true,
+              beginAtZero: false,
+              title: {
+                display: true,
+                text: 'Rank'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Days Since Published'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                title: function(context) {
+                  return context[0].label;
+                },
+                label: function(context) {
+                  return 'Rank: ' + context.parsed.y;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Percentile Over Time Chart
+      const percentileOverTimeCtx = document.getElementById('percentileOverTimeChart').getContext('2d');
+      new Chart(percentileOverTimeCtx, {
+        type: 'line',
+        data: {
+          labels: [<%= @performance_over_time.map { |r| "'#{r.days_since_published} days'" }.join(', ').html_safe %>],
+          datasets: [{
+            label: 'Percentile',
+            data: [<%= @performance_over_time.map(&:percentile).join(', ').html_safe %>],
+            borderColor: 'rgb(168, 85, 247)',
+            backgroundColor: 'rgba(168, 85, 247, 0.1)',
+            tension: 0.1,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: {
+                display: true,
+                text: 'Percentile (%)'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Days Since Published'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                title: function(context) {
+                  return context[0].label;
+                },
+                label: function(context) {
+                  return 'Percentile: ' + context.parsed.y.toFixed(1) + '%';
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Views vs Rank Chart
+      const viewsVsRankCtx = document.getElementById('viewsVsRankChart').getContext('2d');
+      new Chart(viewsVsRankCtx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Views vs Rank',
+            data: [
+              <% @performance_over_time.each do |r| %>
+                {
+                  x: <%= r.views_since_published %>,
+                  y: <%= r.rank %>
+                },
+              <% end %>
+            ],
+            backgroundColor: 'rgba(59, 130, 246, 0.6)',
+            borderColor: 'rgb(59, 130, 246)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              reverse: true,
+              beginAtZero: false,
+              title: {
+                display: true,
+                text: 'Rank'
+              }
+            },
+            x: {
+              type: 'logarithmic',
+              title: {
+                display: true,
+                text: 'Views Since Published'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                title: function(context) {
+                  return 'Views: ' + context[0].parsed.x.toLocaleString();
+                },
+                label: function(context) {
+                  return 'Rank: ' + context[0].parsed.y;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Rank Change Over Time Chart
+      const rankChangeCtx = document.getElementById('rankChangeChart').getContext('2d');
+      new Chart(rankChangeCtx, {
+        type: 'line',
+        data: {
+          labels: [<%= @performance_over_time.map { |r| "'#{r.days_since_published} days'" }.join(', ').html_safe %>],
+          datasets: [{
+            label: 'Rank Change Since Day 1',
+            data: [<%= @performance_over_time.map { |r| r.rank_change_since_day_1 || 0 }.join(', ').html_safe %>],
+            borderColor: 'rgb(245, 158, 11)',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            tension: 0.1,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Rank Change'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Days Since Published'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                title: function(context) {
+                  return context[0].label;
+                },
+                label: function(context) {
+                  const value = context.parsed.y;
+                  if (value > 0) {
+                    return 'Rank Change: +' + value + ' positions';
+                  } else if (value < 0) {
+                    return 'Rank Change: ' + value + ' positions';
+                  } else {
+                    return 'Rank Change: No change';
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Cumulative Views Over Time Chart
+      const cumulativeViewsCtx = document.getElementById('cumulativeViewsChart').getContext('2d');
+      new Chart(cumulativeViewsCtx, {
+        type: 'line',
+        data: {
+          labels: [<%= @performance_over_time.map { |r| "'#{r.days_since_published} days'" }.join(', ').html_safe %>],
+          datasets: [{
+            label: 'Cumulative Views',
+            data: [<%= @performance_over_time.map(&:views_since_published).join(', ').html_safe %>],
+            borderColor: 'rgb(16, 185, 129)',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.1,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              type: 'logarithmic',
+              title: {
+                display: true,
+                text: 'Cumulative Views'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Days Since Published'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                title: function(context) {
+                  return context[0].label;
+                },
+                label: function(context) {
+                  return 'Views: ' + context.parsed.y.toLocaleString();
+                }
+              }
+            }
+          }
+        }
+      });
+    <% end %>
+  </script>
+<% end %>
+
+<script>
+  // Description toggle functionality
+  function toggleDescription() {
+    const preview = document.getElementById('description-preview');
+    const full = document.getElementById('description-full');
+    const expandText = document.getElementById('expand-text');
+    const collapseText = document.getElementById('collapse-text');
+    
+    if (preview.classList.contains('hidden')) {
+      // Show preview, hide full
+      preview.classList.remove('hidden');
+      full.classList.add('hidden');
+      expandText.classList.remove('hidden');
+      collapseText.classList.add('hidden');
+    } else {
+      // Show full, hide preview
+      preview.classList.add('hidden');
+      full.classList.remove('hidden');
+      expandText.classList.add('hidden');
+      collapseText.classList.remove('hidden');
+    }
+  }
+
+  // Date selection functionality
+  function updateDateSelection(selectedDate) {
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('selected_date', selectedDate);
+    window.location.href = currentUrl.toString();
+  }
+
+  // Chart time range functionality
+  function updateChartTimeRange(selectedRange) {
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('chart_time_range', selectedRange);
+    window.location.href = currentUrl.toString();
+  }
+</script> 

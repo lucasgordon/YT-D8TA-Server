@@ -4,6 +4,8 @@ require "open3"
 class Video < ApplicationRecord
   has_many :views, foreign_key: :youtube_id, primary_key: :youtube_id, dependent: :destroy
   has_many :thumbnails, foreign_key: :youtube_id, primary_key: :youtube_id, dependent: :destroy
+  has_many :video_daily_rankings, dependent: :destroy
+  has_many :video_results_since_published, dependent: :destroy
 
   validates :youtube_id, presence: true, uniqueness: true
   validates :title, presence: true
@@ -61,6 +63,10 @@ class Video < ApplicationRecord
     end
   end
 
+  def daily_rankings
+    video_daily_rankings.order(:date)
+  end
+
   private
 
   def self.process_result(result)
@@ -80,10 +86,17 @@ class Video < ApplicationRecord
     if result["videos"]
       result["videos"].each do |video_data|
         video = find_or_initialize_by(youtube_id: video_data["youtube_id"])
+
+        # Calculate date_published first to check if we should skip this record
+        date_published = Time.at(video_data["date_published"].to_i)
+
+        # Skip videos published before 2020
+        next if date_published < Time.new(2020, 1, 1)
+
         video.assign_attributes(
           title: video_data["title"],
           description: video_data["description"],
-          date_published: Time.at(video_data["date_published"].to_i),
+          date_published: date_published,
           channel_id: video_data["channel_id"],
           draft_status: video_data["draft_status"],
           length_seconds: video_data["length_seconds"],
@@ -99,6 +112,15 @@ class Video < ApplicationRecord
         )
         video.save!
 
+        # Process thumbnail data
+        if video_data["thumbnail_data"] && video_data["thumbnail_data"]["url"]
+          thumbnail = video.thumbnails.find_or_initialize_by(youtube_id: video_data["youtube_id"])
+          thumbnail.assign_attributes(
+            url: video_data["thumbnail_data"]["url"]
+          )
+          thumbnail.save!
+        end
+
         # Process views data
         puts "views: #{result["views"]["youtube_id"]}"
         if result["views"] && result["views"][video_data["youtube_id"]]
@@ -108,9 +130,19 @@ class Video < ApplicationRecord
             next unless video  # Skip if video not found
 
             view = video.views.find_or_initialize_by(date: view_data["date"])
+
+            # Calculate single_day_views as the difference between this day and previous day
+            previous_view = video.views.find_by(date: (Date.parse(view_data["date"]) - 1.day).strftime("%Y-%m-%d"))
+            single_day_views = if previous_view && view_data["daily_view_count"].to_i > 0
+              view_data["daily_view_count"].to_i - previous_view.daily_view_count.to_i
+            else
+              view_data["daily_view_count"].to_i
+            end
+
             view.assign_attributes(
               millis_data: view_data["millis_data"],
-              daily_view_count: view_data["daily_view_count"]
+              daily_view_count: view_data["daily_view_count"],
+              single_day_views: single_day_views
             )
             view.save!
           end

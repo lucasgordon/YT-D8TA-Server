@@ -27,6 +27,18 @@ gem "nokogiri", ">= 1.12"
 # For YAML/JSON parsing (if needed)
 gem "oj", "~> 3.16"
 
+# Frontend gems
+gem "sprockets-rails"
+gem "importmap-rails"
+gem "turbo-rails"
+gem "stimulus-rails"
+gem "sassc-rails"
+gem "cssbundling-rails"
+gem "jsbundling-rails"
+gem "tailwindcss-rails"
+
+gem "view_component"
+
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
@@ -44,6 +56,10 @@ gem "dotenv-rails"
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 # gem "rack-cors"
+
+
+# Pagination
+gem "kaminari"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

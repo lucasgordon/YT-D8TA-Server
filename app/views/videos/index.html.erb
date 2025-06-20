@@ -1,0 +1,592 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6">Video Performance Dashboard</h1>
+  
+  <!-- Timeline Control Panel -->
+  <div class="bg-white shadow rounded-lg p-6 mb-6 bg-red-500">
+    <h2 class="text-xl font-semibold mb-4">Timeline Control Panel</h2>
+    <div class="flex items-center space-x-4">
+      <label for="days_since_published" class="text-sm font-medium text-gray-700">
+        Day Range for Rankings:
+      </label>
+      <select id="days_since_published" name="days_since_published" 
+              class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onchange="this.form.submit()">
+        <% @available_days.each do |days| %>
+          <option value="<%= days %>" <%= 'selected' if days == @selected_days %>>
+            <%= days == 1 ? "First day views" : "First #{days} days views" %>
+          </option>
+        <% end %>
+      </select>
+      <span class="text-sm text-gray-500">
+        Showing <%= @total_videos %> videos
+      </span>
+    </div>
+  </div>
+
+  <!-- Video Ranking Grid -->
+  <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h2 class="text-xl font-semibold">Video Rankings</h2>
+      <p class="text-sm text-gray-600 mt-1">
+        Showing <span class="number-font"><%= @video_rankings.offset_value + 1 %></span>-<span class="number-font"><%= @video_rankings.offset_value + @video_rankings.length %></span> of <span class="number-font"><%= @total_videos %></span> videos
+      </p>
+    </div>
+
+    <% if @video_rankings.any? %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" 
+                  onclick="sortTable('rank')">
+                <div class="flex items-center justify-between">
+                  <span>Rank</span>
+                  <div class="flex flex-col">
+                    <% if @sort_column == 'rank' %>
+                      <% if @sort_direction == 'asc' %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% else %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% end %>
+                    <% else %>
+                      <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    <% end %>
+                  </div>
+                </div>
+              </th>
+              <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Thumbnail
+              </th>
+              <th id="title_column_header" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Video Title
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" 
+                  onclick="sortTable('views_since_published')">
+                <div class="flex items-center justify-between">
+                  <span>Views Since Published</span>
+                  <div class="flex flex-col">
+                    <% if @sort_column == 'views_since_published' %>
+                      <% if @sort_direction == 'asc' %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% else %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% end %>
+                    <% else %>
+                      <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    <% end %>
+                  </div>
+                </div>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" 
+                  onclick="sortTable('date_published')">
+                <div class="flex items-center justify-between">
+                  <span>Upload Date</span>
+                  <div class="flex flex-col">
+                    <% if @sort_column == 'date_published' %>
+                      <% if @sort_direction == 'asc' %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% else %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% end %>
+                    <% else %>
+                      <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    <% end %>
+                  </div>
+                </div>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" 
+                  onclick="sortTable('percentile')">
+                <div class="flex items-center justify-between">
+                  <span>Percentile</span>
+                  <div class="flex flex-col">
+                    <% if @sort_column == 'percentile' %>
+                      <% if @sort_direction == 'asc' %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% else %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% end %>
+                    <% else %>
+                      <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    <% end %>
+                  </div>
+                </div>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" 
+                  onclick="sortTable('rank_change_since_day_1')">
+                <div class="flex items-center justify-between">
+                  <span>Rank Change</span>
+                  <div class="flex flex-col">
+                    <% if @sort_column == 'rank_change_since_day_1' %>
+                      <% if @sort_direction == 'asc' %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% else %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% end %>
+                    <% else %>
+                      <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    <% end %>
+                  </div>
+                </div>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" 
+                  onclick="sortTable('day_over_day_rank_change')">
+                <div class="flex items-center justify-between">
+                  <span>Day Over Day Change</span>
+                  <div class="flex flex-col">
+                    <% if @sort_column == 'day_over_day_rank_change' %>
+                      <% if @sort_direction == 'asc' %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% else %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% end %>
+                    <% else %>
+                      <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    <% end %>
+                  </div>
+                </div>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" 
+                  onclick="sortTable('rank_slope_since_day_1')">
+                <div class="flex items-center justify-between">
+                  <span>Rank Slope</span>
+                  <div class="flex flex-col">
+                    <% if @sort_column == 'rank_slope_since_day_1' %>
+                      <% if @sort_direction == 'asc' %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% else %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% end %>
+                    <% else %>
+                      <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    <% end %>
+                  </div>
+                </div>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" 
+                  onclick="sortTable('percentile_change_since_day_1')">
+                <div class="flex items-center justify-between">
+                  <span>Percentile Change</span>
+                  <div class="flex flex-col">
+                    <% if @sort_column == 'percentile_change_since_day_1' %>
+                      <% if @sort_direction == 'asc' %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% else %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% end %>
+                    <% else %>
+                      <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    <% end %>
+                  </div>
+                </div>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" 
+                  onclick="sortTable('three_day_smoothed_average_rank_change')">
+                <div class="flex items-center justify-between">
+                  <span>3-Day Avg Change</span>
+                  <div class="flex flex-col">
+                    <% if @sort_column == 'three_day_smoothed_average_rank_change' %>
+                      <% if @sort_direction == 'asc' %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% else %>
+                        <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      <% end %>
+                    <% else %>
+                      <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    <% end %>
+                  </div>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% @video_rankings.each do |ranking| %>
+              <tr class="hover:bg-gray-50 cursor-pointer" onclick="handleRowClick(event, '<%= video_path(ranking.video) %>')">
+                <!-- Ranking Badge -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium number-font
+                                 <%= ranking.rank <= 10 ? 'bg-green-100 text-green-800' : 
+                                     ranking.rank <= 50 ? 'bg-blue-100 text-blue-800' : 
+                                     ranking.rank <= 100 ? 'bg-yellow-100 text-yellow-800' : 
+                                     'bg-gray-100 text-gray-800' %>">
+                      <%= ranking.rank %>/<%= ranking.total_videos %>
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Thumbnail -->
+                <td class="px-2 py-4 whitespace-nowrap">
+                  <div class="flex-shrink-0 h-10 w-18">
+                    <% if ranking.video.thumbnails.any? %>
+                      <img class="h-12 w-21 rounded-lg object-cover cursor-pointer thumbnail-tooltip" 
+                           src="<%= ranking.video.thumbnails.first.url %>" 
+                           alt="Video thumbnail"
+                           data-video-id="<%= ranking.video.youtube_id %>"
+                           data-views="<%= number_with_delimiter(ranking.video.view_count) %>"
+                           data-length="<% if ranking.video.length_seconds.present? %><% seconds = ranking.video.length_seconds.to_i %><% minutes = seconds / 60 %><% remaining_seconds = seconds % 60 %><%= "#{minutes}:#{remaining_seconds.to_s.rjust(2, '0')}" %><% else %>-<% end %>"
+                           data-comments="<%= number_with_delimiter(ranking.video.comment_count) %>"
+                           data-likes="<%= number_with_delimiter(ranking.video.like_count) %>"
+                           data-published="<% if ranking.video.date_published.present? %><%= Date.parse(ranking.video.date_published).strftime("%b %-d, %Y") %><% else %>-<% end %>"
+                           onclick="event.stopPropagation(); window.open('<%= ranking.video.watch_url %>', '_blank')">
+                    <% else %>
+                      <div class="h-10 w-18 bg-gray-200 rounded-lg flex items-center justify-center cursor-pointer thumbnail-tooltip"
+                           data-video-id="<%= ranking.video.youtube_id %>"
+                           data-views="<%= number_with_delimiter(ranking.video.view_count) %>"
+                           data-length="<% if ranking.video.length_seconds.present? %><% seconds = ranking.video.length_seconds.to_i %><% minutes = seconds / 60 %><% remaining_seconds = seconds % 60 %><%= "#{minutes}:#{remaining_seconds.to_s.rjust(2, '0')}" %><% else %>-<% end %>"
+                           data-comments="<%= number_with_delimiter(ranking.video.comment_count) %>"
+                           data-likes="<%= number_with_delimiter(ranking.video.like_count) %>"
+                           data-published="<% if ranking.video.date_published.present? %><%= Date.parse(ranking.video.date_published).strftime("%b %-d, %Y") %><% else %>-<% end %>"
+                           onclick="event.stopPropagation(); window.open('<%= ranking.video.watch_url %>', '_blank')">
+                        <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    <% end %>
+                  </div>
+                </td>
+
+                <!-- Video Title -->
+                <td id="title_column_cell" class="px-6 py-4">
+                  <div class="text-sm font-medium text-gray-900">
+                    <a href="<%= ranking.video.watch_url %>" 
+                       target="_blank" 
+                       class="hover:text-blue-600 hover:underline"
+                       onclick="event.stopPropagation()">
+                      <%= truncate(ranking.video.title, length: 60) %>
+                    </a>
+                  </div>
+                </td>
+
+                <!-- Views Since Published -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
+                  <%= number_with_delimiter(ranking.views_since_published) %>
+                </td>
+
+                <!-- Upload Date -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <% if ranking.video.date_published.present? %>
+                    <%= time_ago_in_words_custom(ranking.video.date_published) %>
+                  <% else %>
+                    -
+                  <% end %>
+                </td>
+
+                <!-- Percentile -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
+                  <%= number_with_precision(ranking.percentile, precision: 1) %>%
+                </td>
+
+                <!-- Rank Change Since Day 1 -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <% if @selected_days == 1 %>
+                    <span class="text-sm text-gray-400">-</span>
+                  <% elsif ranking.rank_change_since_day_1 %>
+                    <% change = ranking.rank_change_since_day_1 %>
+                    <div class="flex items-center">
+                      <% if change > 2 %>
+                        <svg class="h-4 w-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-sm text-green-600"><span class="number-font">+<%= change.abs %></span> positions</span>
+                      <% elsif change < -2 %>
+                        <svg class="h-4 w-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-sm text-red-600"><span class="number-font">-<%= change.abs %></span> positions</span>
+                      <% else %>
+                        <svg class="h-4 w-4 text-gray-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-sm text-gray-600">Stable</span>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <span class="text-sm text-gray-400">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Day Over Day Rank Change -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <% if ranking.day_over_day_rank_change %>
+                    <% change = ranking.day_over_day_rank_change %>
+                    <div class="flex items-center">
+                      <% if change > 2 %>
+                        <svg class="h-4 w-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-sm text-green-600 number-font">+<%= change.abs %></span>
+                      <% elsif change < -2 %>
+                        <svg class="h-4 w-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-sm text-red-600 number-font">-<%= change.abs %></span>
+                      <% else %>
+                        <svg class="h-4 w-4 text-gray-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-sm text-gray-600 number-font">0</span>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <span class="text-sm text-gray-400">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Rank Slope Since Day 1 -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
+                  <% if ranking.rank_slope_since_day_1 %>
+                    <span class="<%= ranking.rank_slope_since_day_1 > 0 ? 'text-green-600' : ranking.rank_slope_since_day_1 < 0 ? 'text-red-600' : 'text-gray-600' %>">
+                      <%= number_with_precision(ranking.rank_slope_since_day_1, precision: 2) %>
+                    </span>
+                  <% else %>
+                    <span class="text-sm text-gray-400">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Percentile Change Since Day 1 -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
+                  <% if @selected_days == 1 %>
+                    <span class="text-sm text-gray-400">-</span>
+                  <% elsif ranking.percentile_change_since_day_1 %>
+                    <span class="<%= ranking.percentile_change_since_day_1 > 0 ? 'text-green-600' : ranking.percentile_change_since_day_1 < 0 ? 'text-red-600' : 'text-gray-600' %>">
+                      <%= number_with_precision(ranking.percentile_change_since_day_1, precision: 1) %>%
+                    </span>
+                  <% else %>
+                    <span class="text-sm text-gray-400">-</span>
+                  <% end %>
+                </td>
+
+                <!-- Three Day Smoothed Average Rank Change -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
+                  <% if ranking.three_day_smoothed_average_rank_change %>
+                    <span class="<%= ranking.three_day_smoothed_average_rank_change > 0 ? 'text-green-600' : ranking.three_day_smoothed_average_rank_change < 0 ? 'text-red-600' : 'text-gray-600' %>">
+                      <%= ranking.three_day_smoothed_average_rank_change > 0 ? '+' : '' %><%= ranking.three_day_smoothed_average_rank_change %>
+                    </span>
+                  <% else %>
+                    <span class="text-sm text-gray-400">-</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+        <%= paginate @video_rankings %>
+      </div>
+    <% else %>
+      <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No videos found</h3>
+        <p class="mt-1 text-sm text-gray-500">
+          No video rankings available for the selected day range.
+        </p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Global Tooltip Container -->
+<div id="global-tooltip" class="fixed hidden z-[99999]">
+  <div class="bg-gray-800 text-white rounded-lg p-6 shadow-xl max-w-sm" style="background-color: #374151;">
+    <div class="space-y-3">
+      <div class="flex justify-between items-center border-b border-gray-600 pb-2">
+        <span class="text-gray-300">Views</span>
+        <span class="font-semibold ml-4" id="tooltip-views">-</span>
+      </div>
+      <div class="flex justify-between items-center border-b border-gray-600 pb-2">
+        <span class="text-gray-300">Duration</span>
+        <span class="font-semibold ml-4" id="tooltip-length">-</span>
+      </div>
+      <div class="flex justify-between items-center border-b border-gray-600 pb-2">
+        <span class="text-gray-300">Comments</span>
+        <span class="font-semibold ml-4" id="tooltip-comments">-</span>
+      </div>
+      <div class="flex justify-between items-center border-b border-gray-600 pb-2">
+        <span class="text-gray-300">Likes</span>
+        <span class="font-semibold ml-4" id="tooltip-likes">-</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-gray-300">Published</span>
+        <span class="font-semibold ml-4" id="tooltip-published">-</span>
+      </div>
+    </div>
+  </div>
+  <!-- Arrow -->
+  <div class="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style="border-top-color: #374151;"></div>
+</div>
+
+<script>
+  // Auto-submit form when timeline selection changes
+  document.addEventListener('DOMContentLoaded', function() {
+    const select = document.getElementById('days_since_published');
+    if (select) {
+      select.addEventListener('change', function() {
+        const url = new URL(window.location);
+        url.searchParams.set('days_since_published', this.value);
+        url.searchParams.delete('page'); // Reset to first page when changing day range
+        window.location.href = url.toString();
+      });
+    }
+
+    // Tooltip functionality for thumbnails
+    const thumbnailElements = document.querySelectorAll('.thumbnail-tooltip');
+    const globalTooltip = document.getElementById('global-tooltip');
+    
+    thumbnailElements.forEach(thumbnail => {
+      // Show tooltip on mouse enter
+      thumbnail.addEventListener('mouseenter', function(e) {
+        // Get tooltip data from data attributes
+        const views = thumbnail.getAttribute('data-views');
+        const length = thumbnail.getAttribute('data-length');
+        const comments = thumbnail.getAttribute('data-comments');
+        const likes = thumbnail.getAttribute('data-likes');
+        const published = thumbnail.getAttribute('data-published');
+        
+        // Populate tooltip content
+        document.getElementById('tooltip-views').textContent = views;
+        document.getElementById('tooltip-length').textContent = length;
+        document.getElementById('tooltip-comments').textContent = comments;
+        document.getElementById('tooltip-likes').textContent = likes;
+        document.getElementById('tooltip-published').textContent = published;
+        
+        // Position tooltip
+        const rect = thumbnail.getBoundingClientRect();
+        const tooltipRect = globalTooltip.getBoundingClientRect();
+        
+        // Calculate position - center horizontally on the thumbnail
+        let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+        let top;
+        
+        // Check if there's enough space above
+        const spaceAbove = rect.top - tooltipRect.height - 60;
+        const spaceBelow = window.innerHeight - rect.bottom - tooltipRect.height - 60;
+        
+        if (spaceAbove >= 10) {
+          // Show above if there's enough space
+          top = rect.top - tooltipRect.height - 60;
+        } else if (spaceBelow >= 10) {
+          // Show below if there's enough space
+          top = rect.bottom + 60;
+        } else {
+          // If not enough space in either direction, show above but adjust position
+          top = Math.max(10, rect.top - tooltipRect.height - 30);
+        }
+        
+        // Ensure tooltip stays within viewport bounds horizontally
+        if (left < 10) left = 10;
+        if (left + tooltipRect.width > window.innerWidth - 10) {
+          left = window.innerWidth - tooltipRect.width - 10;
+        }
+        
+        globalTooltip.style.left = left + 'px';
+        globalTooltip.style.top = top + 'px';
+        
+        // Show tooltip
+        globalTooltip.classList.remove('hidden');
+      });
+      
+      // Hide tooltip on mouse leave
+      thumbnail.addEventListener('mouseleave', function() {
+        globalTooltip.classList.add('hidden');
+      });
+    });
+    
+    // Also hide tooltip when mouse leaves the tooltip itself
+    globalTooltip.addEventListener('mouseleave', function() {
+      globalTooltip.classList.add('hidden');
+    });
+  });
+
+  // Sorting functionality
+  function sortTable(column) {
+    const url = new URL(window.location);
+    const currentSort = url.searchParams.get('sort');
+    const currentDirection = url.searchParams.get('direction');
+    
+    // If clicking the same column, toggle direction
+    if (currentSort === column) {
+      const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+      url.searchParams.set('direction', newDirection);
+    } else {
+      // If clicking a different column, set it to ascending
+      url.searchParams.set('sort', column);
+      url.searchParams.set('direction', 'asc');
+    }
+    
+    // Reset to first page when sorting
+    url.searchParams.delete('page');
+    
+    // Navigate to the new URL
+    window.location.href = url.toString();
+  }
+
+  // Row click handler for navigation to video show page
+  function handleRowClick(event, videoPath) {
+    // Don't navigate if clicking on elements that have their own click handlers
+    if (event.target.closest('a') || event.target.closest('.thumbnail-tooltip')) {
+      return;
+    }
+    
+    // Navigate to the video show page
+    window.location.href = videoPath;
+  }
+</script>
