@@ -38,3 +38,7 @@
 
 # YouTube cookies
 lib/python_scripts/youtube_cookies.json
+
+lib/python_scripts/chrome_profile/*
+/app/assets/builds/*
+!/app/assets/builds/.keep

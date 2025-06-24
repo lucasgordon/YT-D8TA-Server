@@ -1,3 +1,6 @@
-2025/06/15-16:52:31.933 16dcd9c Reusing MANIFEST /Users/gordon/Documents/youtube_data_project/server/server/lib/python_scripts/chrome_profile/Default/Local Storage/leveldb/MANIFEST-000001
-2025/06/15-16:52:31.944 16dcd9c Recovering log #3
-2025/06/15-16:52:31.952 16dcd9c Reusing old log /Users/gordon/Documents/youtube_data_project/server/server/lib/python_scripts/chrome_profile/Default/Local Storage/leveldb/000003.log 
+2025/06/23-21:46:42.617 1bb670f Reusing MANIFEST /Users/gordon/Documents/youtube_data_project/server/server/lib/python_scripts/chrome_profile/Default/Local Storage/leveldb/MANIFEST-000001
+2025/06/23-21:46:42.618 1bb670f Recovering log #3
+2025/06/23-21:46:42.619 1bb670f Reusing old log /Users/gordon/Documents/youtube_data_project/server/server/lib/python_scripts/chrome_profile/Default/Local Storage/leveldb/000003.log 
+2025/06/23-21:47:42.622 1bb6711 Level-0 table #5: started
+2025/06/23-21:47:42.626 1bb6711 Level-0 table #5: 8794 bytes OK
+2025/06/23-21:47:42.629 1bb6711 Delete type=0 #3
