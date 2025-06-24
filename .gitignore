@@ -42,3 +42,7 @@ lib/python_scripts/youtube_cookies.json
 lib/python_scripts/chrome_profile/*
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# Node modules and lock file
+node_modules/
+package-lock.json
