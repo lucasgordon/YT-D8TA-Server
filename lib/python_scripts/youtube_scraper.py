@@ -135,7 +135,32 @@ def get_driver(headless: bool = True):
         options.add_argument('--password-store=basic')
         options.add_argument('--use-mock-keychain')
         
-        driver = uc.Chrome(options=options)
+        # Try to use Chrome from custom installation location (Render)
+        chrome_paths = [
+            "/opt/render/project/.render/chrome/opt/google/chrome/chrome",
+            "/usr/bin/google-chrome",
+            "/usr/bin/chromium-browser",
+            "/usr/bin/chromium"
+        ]
+        
+        chrome_found = False
+        for chrome_path in chrome_paths:
+            if os.path.exists(chrome_path):
+                options.binary_location = chrome_path
+                chrome_found = True
+                print(f"Using Chrome at: {chrome_path}")
+                break
+        
+        if not chrome_found:
+            print("Warning: Chrome not found in standard locations")
+        
+        try:
+            driver = uc.Chrome(options=options)
+        except Exception as e:
+            print(f"Error creating Chrome driver: {str(e)}")
+            print("This might be because Chrome is not installed on the system.")
+            print("Please ensure Chrome/Chromium is installed.")
+            raise e
         
         # Load saved cookies if they exist
         cookies = load_cookies()
