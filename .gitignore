@@ -46,3 +46,6 @@ lib/python_scripts/chrome_profile/*
 # Node modules and lock file
 node_modules/
 package-lock.json
+
+# Python virtual environment
+venv/
