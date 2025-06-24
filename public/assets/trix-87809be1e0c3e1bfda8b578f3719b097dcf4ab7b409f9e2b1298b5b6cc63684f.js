@@ -1917,7 +1917,7 @@ $\
   }
   const html$1 = freeze(['a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'big', 'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist', 'dd', 'decorator', 'del', 'details', 'dfn', 'dialog', 'dir', 'div', 'dl', 'dt', 'element', 'em', 'fieldset', 'figcaption', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'marquee', 'menu', 'menuitem', 'meter', 'nav', 'nobr', 'ol', 'optgroup', 'option', 'output', 'p', 'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'select', 'shadow', 'small', 'source', 'spacer', 'span', 'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'tt', 'u', 'ul', 'var', 'video', 'wbr']);
   const svg$1 = freeze(['svg', 'a', 'altglyph', 'altglyphdef', 'altglyphitem', 'animatecolor', 'animatemotion', 'animatetransform', 'circle', 'clippath', 'defs', 'desc', 'ellipse', 'filter', 'font', 'g', 'glyph', 'glyphref', 'hkern', 'image', 'line', 'lineargradient', 'marker', 'mask', 'metadata', 'mpath', 'path', 'pattern', 'polygon', 'polyline', 'radialgradient', 'rect', 'stop', 'style', 'switch', 'symbol', 'text', 'textpath', 'title', 'tref', 'tspan', 'view', 'vkern']);
-  const svgFilters = freeze(['feBlend', 'feColorMatrix', 'feComponentTransfer', 'feComposite', 'feConvolveMatrix', 'feDiffuseLighting', 'feDisplacementMap', 'feDistantLight', 'feDropShadow', 'feFlood', 'feFuncA', 'feFuncB', 'feFuncG', 'feFuncR', 'feGaussianBlur', 'feImage', 'feMerge', 'feMergeNode', 'feMorphology', 'feOffset', 'fePointLight', 'feSpecularLighting', 'feSpotLight', 'feTile', 'feTurbulence']);
+  const svgFilters = freeze(['feBlend', 'feColorMatrix', 'feComponentTransfer', 'feComposite', 'feConvolveMatrix', 'feDiffuseLighting', 'feDisplacementMap', 'feDistantLight', 'feDropshadow', 'feFlood', 'feFuncA', 'feFuncB', 'feFuncG', 'feFuncR', 'feGaussianBlur', 'feImage', 'feMerge', 'feMergeNode', 'feMorphology', 'feOffset', 'fePointLight', 'feSpecularLighting', 'feSpotLight', 'feTile', 'feTurbulence']);
   // List of SVG elements that are disallowed by default.
   // We still need to know them so that we can do namespace
   // checks properly in case one wants to add them to
@@ -2026,13 +2026,13 @@ $\
     return {
       afterSanitizeAttributes: [],
       afterSanitizeElements: [],
-      afterSanitizeShadowDOM: [],
+      afterSanitizeshadowDOM: [],
       beforeSanitizeAttributes: [],
       beforeSanitizeElements: [],
-      beforeSanitizeShadowDOM: [],
+      beforeSanitizeshadowDOM: [],
       uponSanitizeAttribute: [],
       uponSanitizeElement: [],
-      uponSanitizeShadowNode: []
+      uponSanitizeshadowNode: []
     };
   };
   function createDOMPurify() {
@@ -2415,7 +2415,7 @@ $\
      */
     const _checkValidNamespace = function _checkValidNamespace(element) {
       let parent = getParentNode(element);
-      // In JSDOM, if we're inside shadow DOM, then parentNode
+      // In JSDOM, if we're inside shadow-smDOM, then parentNode
       // can be null. We just simulate parent in this case.
       if (!parent || !parent.tagName) {
         parent = {
@@ -2879,29 +2879,29 @@ $\
       _executeHooks(hooks.afterSanitizeAttributes, currentNode, null);
     };
     /**
-     * _sanitizeShadowDOM
+     * _sanitizeshadowDOM
      *
      * @param fragment to iterate over recursively
      */
-    const _sanitizeShadowDOM = function _sanitizeShadowDOM(fragment) {
+    const _sanitizeshadowDOM = function _sanitizeshadowDOM(fragment) {
       let shadowNode = null;
       const shadowIterator = _createNodeIterator(fragment);
       /* Execute a hook if present */
-      _executeHooks(hooks.beforeSanitizeShadowDOM, fragment, null);
+      _executeHooks(hooks.beforeSanitizeshadowDOM, fragment, null);
       while (shadowNode = shadowIterator.nextNode()) {
         /* Execute a hook if present */
-        _executeHooks(hooks.uponSanitizeShadowNode, shadowNode, null);
+        _executeHooks(hooks.uponSanitizeshadowNode, shadowNode, null);
         /* Sanitize tags and elements */
         _sanitizeElements(shadowNode);
         /* Check attributes next */
         _sanitizeAttributes(shadowNode);
-        /* Deep shadow DOM detected */
+        /* Deep shadow-smDOM detected */
         if (shadowNode.content instanceof DocumentFragment) {
-          _sanitizeShadowDOM(shadowNode.content);
+          _sanitizeshadowDOM(shadowNode.content);
         }
       }
       /* Execute a hook if present */
-      _executeHooks(hooks.afterSanitizeShadowDOM, fragment, null);
+      _executeHooks(hooks.afterSanitizeshadowDOM, fragment, null);
     };
     // eslint-disable-next-line complexity
     DOMPurify.sanitize = function (dirty) {
@@ -2990,9 +2990,9 @@ $\
         _sanitizeElements(currentNode);
         /* Check attributes next */
         _sanitizeAttributes(currentNode);
-        /* Shadow DOM detected, sanitize it */
+        /* shadow-smDOM detected, sanitize it */
         if (currentNode.content instanceof DocumentFragment) {
-          _sanitizeShadowDOM(currentNode.content);
+          _sanitizeshadowDOM(currentNode.content);
         }
       }
       /* If we sanitized `dirty` in-place, return it. */

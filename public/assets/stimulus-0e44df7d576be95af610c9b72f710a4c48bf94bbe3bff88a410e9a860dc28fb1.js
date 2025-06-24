@@ -1570,7 +1570,7 @@ function bless(constructor) {
 }
 function shadow(constructor, properties) {
     const shadowConstructor = extend(constructor);
-    const shadowProperties = getShadowProperties(constructor.prototype, properties);
+    const shadowProperties = getshadowProperties(constructor.prototype, properties);
     Object.defineProperties(shadowConstructor.prototype, shadowProperties);
     return shadowConstructor;
 }
@@ -1585,16 +1585,16 @@ function getBlessedProperties(constructor) {
         return blessedProperties;
     }, {});
 }
-function getShadowProperties(prototype, properties) {
+function getshadowProperties(prototype, properties) {
     return getOwnKeys(properties).reduce((shadowProperties, key) => {
-        const descriptor = getShadowedDescriptor(prototype, properties, key);
+        const descriptor = getshadowedDescriptor(prototype, properties, key);
         if (descriptor) {
             Object.assign(shadowProperties, { [key]: descriptor });
         }
         return shadowProperties;
     }, {});
 }
-function getShadowedDescriptor(prototype, properties, key) {
+function getshadowedDescriptor(prototype, properties, key) {
     const shadowingDescriptor = Object.getOwnPropertyDescriptor(prototype, key);
     const shadowedByValue = shadowingDescriptor && "value" in shadowingDescriptor;
     if (!shadowedByValue) {

@@ -152,6 +152,231 @@ def get_driver(headless: bool = True):
                     pass
     return driver
 
+def load_request_body(filename):
+    """Load a request body from a JSON file"""
+    file_path = os.path.join(os.path.dirname(__file__), 'request_body', filename)
+    try:
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading request body from {filename}: {str(e)}")
+        return None
+
+def extract_video_data(video):
+    """Extract video data from API response"""
+    video_id = video.get('videoId')
+    if not video_id:
+        return None
+
+    return {
+        'youtube_id': video_id,
+        'title': video.get('title', ''),
+        'description': video.get('description', ''),
+        'date_published': video.get('timePublishedSeconds', ''),
+        'channel_id': video.get('channelId', ''),
+        'draft_status': video.get('draftStatus', ''),
+        'length_seconds': video.get('lengthSeconds', ''),
+        'time_created_seconds': video.get('timeCreatedSeconds', ''),
+        'watch_url': video.get('watchUrl', ''),
+        'user_set_monetization': video.get('monetization', {}).get('adMonetization', {}).get('userSetMonetization', ''),
+        'ad_friendly_review_decision': video.get('selfCertification', {}).get('adFriendlyReviewDecision', ''),
+        'view_count': video.get('publicMetrics', {}).get('viewCount', ''),
+        'comment_count': video.get('publicMetrics', {}).get('commentCount', ''),
+        'like_count': video.get('publicMetrics', {}).get('likeCount', ''),
+        'external_view_count': video.get('publicMetrics', {}).get('externalViewCount', ''),
+        'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False),
+        'thumbnail_data': {
+            'url': video.get('thumbnailDetails', {}).get('thumbnails', [])[-1].get('url') if video.get('thumbnailDetails', {}).get('thumbnails') else None
+        }
+    }
+
+def create_fetch_script(url, body, auth_value, cookie_str):
+    """Create a JavaScript fetch script for API calls"""
+    return f"""
+    const body = {json.dumps(body)};
+    const done = arguments[arguments.length - 1];
+    fetch('{url}', {{
+        method: 'POST',
+        credentials: 'include',
+        headers: {{
+            'Content-Type': 'application/json',
+            'Authorization': '{auth_value}',
+            'Cookie': '{cookie_str}',
+            'x-goog-authuser': '0',
+            'x-origin': 'https://studio.youtube.com'
+        }},
+        body: JSON.stringify(body)
+    }})
+    .then(r => r.text().then(txt => done({{status: r.status, text: txt}})))
+    .catch(err => done({{error: err.toString()}}));
+    """
+
+def fetch_videos_data(driver, auth_value, cookie_str, video_list_body, response):
+    """Fetch videos data from YouTube API"""
+    fetch_videos_script = create_fetch_script(
+        'https://studio.youtube.com/youtubei/v1/creator/list_creator_videos?alt=json',
+        video_list_body,
+        auth_value,
+        cookie_str
+    )
+
+    videos_result = driver.execute_async_script(fetch_videos_script)
+    if 'error' in videos_result:
+        raise RuntimeError('Browser fetch error for videos: ' + videos_result['error'])
+    if videos_result.get('status') != 200:
+        raise RuntimeError(f"Unexpected status for videos {videos_result['status']}: {videos_result.get('text')}")
+
+    videos_data = json.loads(videos_result['text'])
+    next_page_token = videos_data.get('nextPageToken')
+    print(f"API Response: {json.dumps(videos_data, indent=2)}")  # Add debug logging
+    
+    all_data = {'videos': [], 'views': {}, 'thumbnails': []}
+
+    # Process first page of videos
+    for video in videos_data.get('videos', []):
+        video_data = extract_video_data(video)
+        if video_data:
+            all_data['videos'].append(video_data)
+
+    # If we have a next page token, make a second API call
+    if next_page_token:
+        # Update the request body with the next page token
+        video_list_body['pageToken'] = next_page_token
+        
+        # Make the second API call
+        fetch_videos_script = create_fetch_script(
+            'https://studio.youtube.com/youtubei/v1/creator/list_creator_videos?alt=json',
+            video_list_body,
+            auth_value,
+            cookie_str
+        )
+
+        videos_result = driver.execute_async_script(fetch_videos_script)
+        if 'error' in videos_result:
+            response.add_message(f"Error fetching second page of videos: {videos_result['error']}")
+        elif videos_result.get('status') == 200:
+            second_page_data = json.loads(videos_result['text'])
+            print(f"Second page API Response: {json.dumps(second_page_data, indent=2)}")
+            
+            # Process second page of videos
+            for video in second_page_data.get('videos', []):
+                video_data = extract_video_data(video)
+                if video_data:
+                    all_data['videos'].append(video_data)
+
+    return all_data
+
+def fetch_views_for_video(driver, video_id, views_body, auth_value, cookie_str, response):
+    """Fetch views data for a specific video"""
+    # Update views body with current video ID
+    views_body['screenConfig']['entity']['videoId'] = video_id
+    print(f"Debug - Updated views body with video ID: {video_id}")
+
+    # Request views for this video
+    fetch_views_script = create_fetch_script(
+        'https://studio.youtube.com/youtubei/v1/yta_web/get_screen?alt=json',
+        views_body,
+        auth_value,
+        cookie_str
+    )
+
+    views_result = driver.execute_async_script(fetch_views_script)
+    if 'error' in views_result:
+        response.add_message(f"Error fetching views for video {video_id}: {views_result['error']}")
+        return None
+    if views_result.get('status') != 200:
+        response.add_message(f"Unexpected status for video {video_id}: {views_result['status']}")
+        return None
+
+    # Process views data
+    views_data = json.loads(views_result['text'])
+    external_views_data = views_data['cards'][1]['keyMetricCardData']['keyMetricTabs'][0]['primaryContent']['mainSeries']['datums']
+    
+    # Convert timestamps to dates and store views
+    views = []
+    for datum in external_views_data:
+        timestamp = datum['x']
+        date = datetime.fromtimestamp(timestamp / 1000).strftime('%Y-%m-%d')
+        views.append({
+            'date': date,
+            'millis_data': timestamp,
+            'daily_view_count': datum['y']
+        })
+    # Sort views by date before returning
+    views.sort(key=lambda x: x['millis_data'])
+    
+    print(f"Debug - Stored views for video {video_id}: {len(views)} data points")
+    return views
+
+def setup_authentication(driver, auth_value, cookie_str):
+    """Setup authentication and return request bodies"""
+    # Load request bodies from JSON files
+    video_list_body = load_request_body('video_list_body.json')
+    views_body = load_request_body('views_body.json')
+    
+    if not video_list_body or not views_body:
+        raise RuntimeError('Failed to load request bodies')
+    
+    return video_list_body, views_body
+
+def handle_2fa_challenge(driver, two_fa_code, response):
+    """Handle 2FA challenge if present"""
+    challenge_url = load_challenge_url()
+    if challenge_url:
+        print(f"Found saved challenge URL: {challenge_url}")  # Debug log
+        driver.get(challenge_url)
+        time.sleep(2)
+        if "challenge" in driver.current_url or "2fa" in driver.current_url.lower():
+            print("Detected 2FA challenge page")  # Debug log
+            response.set_auth_state('2FA_REQUIRED')
+            response.set_challenge_url(driver.current_url)
+            save_challenge_url(driver.current_url)
+            return True
+    return False
+
+def process_2fa_input(driver, two_fa_code, response):
+    """Process 2FA input if code is provided"""
+    if not two_fa_code:
+        return False
+        
+    try:
+        wait = WebDriverWait(driver, 30)
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[type="tel"]')))
+        driver.find_element(By.CSS_SELECTOR, 'input[type="tel"]').send_keys(two_fa_code)
+        driver.find_element(By.CSS_SELECTOR, '#idvPreregisteredPhoneNext').click()
+        time.sleep(3)
+        response.set_auth_state('AUTHENTICATED')
+        return True
+    except Exception as e:
+        print(f"Error during 2FA input: {str(e)}")
+        response.set_auth_state('2FA_REQUIRED')
+        response.set_challenge_url(driver.current_url)
+        save_challenge_url(driver.current_url)
+        return False
+
+def get_auth_headers(driver):
+    """Extract cookies and compute authorization headers"""
+    # Extract cookies and compute Authorization
+    cdp = driver.execute_cdp_cmd('Network.getAllCookies', {})
+    cookies = cdp.get('cookies', [])
+    save_cookies(cookies)
+    
+    # Find SAPISID cookie
+    sapisid = None
+    for cookie in cookies:
+        if cookie['name'] == 'SAPISID':
+            sapisid = cookie['value']
+            break
+            
+    if not sapisid:
+        raise RuntimeError('Missing SAPISID cookie')
+        
+    fresh_hash = compute_sapisidhash(sapisid)
+    cookie_str = '; '.join([f"{c['name']}={c['value']}" for c in cookies])
+    auth_value = f"SAPISIDHASH {fresh_hash}"
+    
+    return auth_value, cookie_str
+
 def check_auth_state():
     """Check the current authentication state of the browser session"""
     response = ResponseCollector()
@@ -159,17 +384,8 @@ def check_auth_state():
         driver = get_driver(headless=True)
         
         # First try the saved challenge URL if it exists
-        challenge_url = load_challenge_url()
-        if challenge_url:
-            print(f"Found saved challenge URL: {challenge_url}")  # Debug log
-            driver.get(challenge_url)
-            time.sleep(2)
-            if "challenge" in driver.current_url or "2fa" in driver.current_url.lower():
-                print("Detected 2FA challenge page")  # Debug log
-                response.set_auth_state('2FA_REQUIRED')
-                response.set_challenge_url(driver.current_url)
-                save_challenge_url(driver.current_url)
-                return response.to_json()
+        if handle_2fa_challenge(driver, None, response):
+            return response.to_json()
         
         # If no challenge URL or it didn't work, try studio.youtube.com
         print("Checking studio.youtube.com")  # Debug log
@@ -194,211 +410,17 @@ def check_auth_state():
             
             # If authenticated, fetch the data
             try:
-                # Extract cookies and compute Authorization
-                cdp = driver.execute_cdp_cmd('Network.getAllCookies', {})
-                cookies = cdp.get('cookies', [])
-                save_cookies(cookies)
-                
-                # Find SAPISID cookie
-                sapisid = None
-                for cookie in cookies:
-                    if cookie['name'] == 'SAPISID':
-                        sapisid = cookie['value']
-                        break
-                        
-                if not sapisid:
-                    raise RuntimeError('Missing SAPISID cookie')
-                    
-                fresh_hash = compute_sapisidhash(sapisid)
-                cookie_str = '; '.join([f"{c['name']}={c['value']}" for c in cookies])
-                auth_value = f"SAPISIDHASH {fresh_hash}"
-
-                # Load request bodies from JSON files
-                video_list_body = load_request_body('video_list_body.json')
-                views_body = load_request_body('views_body.json')
-                
-                if not video_list_body or not views_body:
-                    raise RuntimeError('Failed to load request bodies')
-
-                # Fetch video list
-                fetch_videos_script = f"""
-                const body = {json.dumps(video_list_body)};
-                const done = arguments[arguments.length - 1];
-                fetch('https://studio.youtube.com/youtubei/v1/creator/list_creator_videos?alt=json', {{
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {{
-                        'Content-Type': 'application/json',
-                        'Authorization': '{auth_value}',
-                        'Cookie': '{cookie_str}',
-                        'x-goog-authuser': '0',
-                        'x-origin': 'https://studio.youtube.com'
-                    }},
-                    body: JSON.stringify(body)
-                }})
-                .then(r => r.text().then(txt => done({{status: r.status, text: txt}})))
-                .catch(err => done({{error: err.toString()}}));
-                """
-
-                videos_result = driver.execute_async_script(fetch_videos_script)
-                if 'error' in videos_result:
-                    raise RuntimeError('Browser fetch error for videos: ' + videos_result['error'])
-                if videos_result.get('status') != 200:
-                    raise RuntimeError(f"Unexpected status for videos {videos_result['status']}: {videos_result.get('text')}")
-
-                videos_data = json.loads(videos_result['text'])
-                next_page_token = videos_data.get('nextPageToken')
-                print(f"API Response: {json.dumps(videos_data, indent=2)}")  # Add debug logging
-                all_data = {'videos': [], 'views': {}, 'thumbnails': []}
-
-                # Process first page of videos
-                for video in videos_data.get('videos', []):
-                    video_id = video.get('videoId')
-                    if not video_id:
-                        continue
-
-                    # Add video data
-                    video_data = {
-                        'youtube_id': video_id,
-                        'title': video.get('title', ''),
-                        'description': video.get('description', ''),
-                        'date_published': video.get('timePublishedSeconds', ''),
-                        'channel_id': video.get('channelId', ''),
-                        'draft_status': video.get('draftStatus', ''),
-                        'length_seconds': video.get('lengthSeconds', ''),
-                        'time_created_seconds': video.get('timeCreatedSeconds', ''),
-                        'watch_url': video.get('watchUrl', ''),
-                        'user_set_monetization': video.get('monetization', {}).get('adMonetization', {}).get('userSetMonetization', ''),
-                        'ad_friendly_review_decision': video.get('selfCertification', {}).get('adFriendlyReviewDecision', ''),
-                        'view_count': video.get('publicMetrics', {}).get('viewCount', ''),
-                        'comment_count': video.get('publicMetrics', {}).get('commentCount', ''),
-                        'like_count': video.get('publicMetrics', {}).get('likeCount', ''),
-                        'external_view_count': video.get('publicMetrics', {}).get('externalViewCount', ''),
-                        'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False),
-                        'thumbnail_data': {
-                            'url': video.get('thumbnailDetails', {}).get('thumbnails', [])[-1].get('url') if video.get('thumbnailDetails', {}).get('thumbnails') else None
-                        }
-                    }
-                    all_data['videos'].append(video_data)
-
-                # If we have a next page token, make a second API call
-                if next_page_token:
-                    # Update the request body with the next page token
-                    video_list_body['pageToken'] = next_page_token
-                    
-                    # Make the second API call
-                    fetch_videos_script = f"""
-                    const body = {json.dumps(video_list_body)};
-                    const done = arguments[arguments.length - 1];
-                    fetch('https://studio.youtube.com/youtubei/v1/creator/list_creator_videos?alt=json', {{
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {{
-                            'Content-Type': 'application/json',
-                            'Authorization': '{auth_value}',
-                            'Cookie': '{cookie_str}',
-                            'x-goog-authuser': '0',
-                            'x-origin': 'https://studio.youtube.com'
-                        }},
-                        body: JSON.stringify(body)
-                    }})
-                    .then(r => r.text().then(txt => done({{status: r.status, text: txt}})))
-                    .catch(err => done({{error: err.toString()}}));
-                    """
-
-                    videos_result = driver.execute_async_script(fetch_videos_script)
-                    if 'error' in videos_result:
-                        response.add_message(f"Error fetching second page of videos: {videos_result['error']}")
-                    elif videos_result.get('status') == 200:
-                        second_page_data = json.loads(videos_result['text'])
-                        print(f"Second page API Response: {json.dumps(second_page_data, indent=2)}")
-                        
-                        # Process second page of videos
-                        for video in second_page_data.get('videos', []):
-                            video_id = video.get('videoId')
-                            if not video_id:
-                                continue
-
-                            # Add video data
-                            video_data = {
-                                'youtube_id': video_id,
-                                'title': video.get('title', ''),
-                                'description': video.get('description', ''),
-                                'date_published': video.get('timePublishedSeconds', ''),
-                                'channel_id': video.get('channelId', ''),
-                                'draft_status': video.get('draftStatus', ''),
-                                'length_seconds': video.get('lengthSeconds', ''),
-                                'time_created_seconds': video.get('timeCreatedSeconds', ''),
-                                'watch_url': video.get('watchUrl', ''),
-                                'user_set_monetization': video.get('monetization', {}).get('adMonetization', {}).get('userSetMonetization', ''),
-                                'ad_friendly_review_decision': video.get('selfCertification', {}).get('adFriendlyReviewDecision', ''),
-                                'view_count': video.get('publicMetrics', {}).get('viewCount', ''),
-                                'comment_count': video.get('publicMetrics', {}).get('commentCount', ''),
-                                'like_count': video.get('publicMetrics', {}).get('likeCount', ''),
-                                'external_view_count': video.get('publicMetrics', {}).get('externalViewCount', ''),
-                                'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False),
-                                'thumbnail_data': {
-                                    'url': video.get('thumbnailDetails', {}).get('thumbnails', [])[-1].get('url') if video.get('thumbnailDetails', {}).get('thumbnails') else None
-                                }
-                            }
-                            all_data['videos'].append(video_data)
+                auth_value, cookie_str = get_auth_headers(driver)
+                video_list_body, views_body = setup_authentication(driver, auth_value, cookie_str)
+                all_data = fetch_videos_data(driver, auth_value, cookie_str, video_list_body, response)
 
                 # Process views for all videos
                 for video in all_data['videos']:
                     video_id = video['youtube_id']
-                    # Update views body with current video ID
-                    views_body['screenConfig']['entity']['videoId'] = video_id
-                    print(f"Debug - Updated views body with video ID: {video_id}")
-
-                    # Request views for this video
-                    fetch_views_script = f"""
-                    const body = {json.dumps(views_body)};
-                    const done = arguments[arguments.length - 1];
-                    fetch('https://studio.youtube.com/youtubei/v1/yta_web/get_screen?alt=json', {{
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {{
-                            'Content-Type': 'application/json',
-                            'Authorization': '{auth_value}',
-                            'Cookie': '{cookie_str}',
-                            'x-goog-authuser': '0',
-                            'x-origin': 'https://studio.youtube.com'
-                        }},
-                        body: JSON.stringify(body)
-                    }})
-                    .then(r => r.text().then(txt => done({{status: r.status, text: txt}})))
-                    .catch(err => done({{error: err.toString()}}));
-                    """
-
-                    views_result = driver.execute_async_script(fetch_views_script)
-                    if 'error' in views_result:
-                        response.add_message(f"Error fetching views for video {video_id}: {views_result['error']}")
-                        continue
-                    if views_result.get('status') != 200:
-                        response.add_message(f"Unexpected status for video {video_id}: {views_result['status']}")
-                        continue
-
-                    # Process views data
-                    views_data = json.loads(views_result['text'])
-                    external_views_data = views_data['cards'][1]['keyMetricCardData']['keyMetricTabs'][0]['primaryContent']['mainSeries']['datums']
-                    
-                    # Convert timestamps to dates and store views
-                    views = []
-                    for datum in external_views_data:
-                        timestamp = datum['x']
-                        date = datetime.fromtimestamp(timestamp / 1000).strftime('%Y-%m-%d')
-                        views.append({
-                            'date': date,
-                            'millis_data': timestamp,
-                            'daily_view_count': datum['y']
-                        })
-                    # Sort views by date before returning
-                    views.sort(key=lambda x: x['millis_data'])
-                    
-                    # Store views using the video_id from the API response
-                    all_data['views'][video_id] = views
-                    print(f"Debug - Stored views for video {video_id}: {len(views)} data points")
-                    print(f"Debug - Current views data structure: {all_data['views']}")
+                    views = fetch_views_for_video(driver, video_id, views_body, auth_value, cookie_str, response)
+                    if views:
+                        all_data['views'][video_id] = views
+                        print(f"Debug - Current views data structure: {all_data['views']}")
 
                     # Small delay between requests
                     time.sleep(1)
@@ -431,17 +453,9 @@ def fetch_youtube_data(username: str = None, password: str = None, two_fa_code: 
                 print(f"Using saved challenge URL: {challenge_url}")
                 driver.get(challenge_url)
                 time.sleep(2)
-                try:
-                    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[type="tel"]')))
-                    driver.find_element(By.CSS_SELECTOR, 'input[type="tel"]').send_keys(two_fa_code)
-                    driver.find_element(By.CSS_SELECTOR, '#idvPreregisteredPhoneNext').click()
-                    time.sleep(3)
-                    response.set_auth_state('AUTHENTICATED')
-                except Exception as e:
-                    print(f"Error during 2FA input: {str(e)}")
-                    response.set_auth_state('2FA_REQUIRED')
-                    response.set_challenge_url(driver.current_url)
-                    save_challenge_url(driver.current_url)
+                if process_2fa_input(driver, two_fa_code, response):
+                    pass  # Continue with data fetch
+                else:
                     return response.to_json()
 
         # First check if we're already logged in
@@ -456,23 +470,9 @@ def fetch_youtube_data(username: str = None, password: str = None, two_fa_code: 
             # Check if we're at the 2FA page
             current_url = driver.current_url
             if "challenge" in current_url or "2fa" in current_url.lower():
-                if two_fa_code:
-                    try:
-                        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[type="tel"]')))
-                        driver.find_element(By.CSS_SELECTOR, 'input[type="tel"]').send_keys(two_fa_code)
-                        driver.find_element(By.CSS_SELECTOR, '#idvPreregisteredPhoneNext').click()
-                        time.sleep(3)
-                        response.set_auth_state('AUTHENTICATED')
-                    except Exception as e:
-                        print(f"Error during 2FA input: {str(e)}")
-                        response.set_auth_state('2FA_REQUIRED')
-                        response.set_challenge_url(driver.current_url)
-                        save_challenge_url(driver.current_url)
-                        return response.to_json()
+                if process_2fa_input(driver, two_fa_code, response):
+                    pass  # Continue with data fetch
                 else:
-                    response.set_auth_state('2FA_REQUIRED')
-                    response.set_challenge_url(current_url)
-                    save_challenge_url(current_url)
                     return response.to_json()
             else:
                 # Only proceed with login if we're not already at 2FA
@@ -496,15 +496,9 @@ def fetch_youtube_data(username: str = None, password: str = None, two_fa_code: 
                 # Check for 2FA prompt
                 try:
                     wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[type="tel"]')))
-                    if two_fa_code:
-                        driver.find_element(By.CSS_SELECTOR, 'input[type="tel"]').send_keys(two_fa_code)
-                        driver.find_element(By.CSS_SELECTOR, '#idvPreregisteredPhoneNext').click()
-                        time.sleep(3)
-                        response.set_auth_state('AUTHENTICATED')
+                    if process_2fa_input(driver, two_fa_code, response):
+                        pass  # Continue with data fetch
                     else:
-                        response.set_auth_state('2FA_REQUIRED')
-                        response.set_challenge_url(driver.current_url)
-                        save_challenge_url(driver.current_url)
                         return response.to_json()
                 except:
                     response.set_auth_state('AUTHENTICATED')
@@ -528,211 +522,18 @@ def fetch_youtube_data(username: str = None, password: str = None, two_fa_code: 
         driver.get("https://studio.youtube.com")
         time.sleep(2)
 
-        # Extract cookies and compute Authorization
-        cdp = driver.execute_cdp_cmd('Network.getAllCookies', {})
-        cookies = cdp.get('cookies', [])
-        save_cookies(cookies)
-        
-        # Find SAPISID cookie
-        sapisid = None
-        for cookie in cookies:
-            if cookie['name'] == 'SAPISID':
-                sapisid = cookie['value']
-                break
-                
-        if not sapisid:
-            raise RuntimeError('Missing SAPISID cookie')
-            
-        fresh_hash = compute_sapisidhash(sapisid)
-        cookie_str = '; '.join([f"{c['name']}={c['value']}" for c in cookies])
-        auth_value = f"SAPISIDHASH {fresh_hash}"
-
-        # Load request bodies from JSON files
-        video_list_body = load_request_body('video_list_body.json')
-        views_body = load_request_body('views_body.json')
-        
-        if not video_list_body or not views_body:
-            raise RuntimeError('Failed to load request bodies')
-
-        # Fetch video list
-        fetch_videos_script = f"""
-        const body = {json.dumps(video_list_body)};
-        const done = arguments[arguments.length - 1];
-        fetch('https://studio.youtube.com/youtubei/v1/creator/list_creator_videos?alt=json', {{
-            method: 'POST',
-            credentials: 'include',
-            headers: {{
-                'Content-Type': 'application/json',
-                'Authorization': '{auth_value}',
-                'Cookie': '{cookie_str}',
-                'x-goog-authuser': '0',
-                'x-origin': 'https://studio.youtube.com'
-            }},
-            body: JSON.stringify(body)
-        }})
-        .then(r => r.text().then(txt => done({{status: r.status, text: txt}})))
-        .catch(err => done({{error: err.toString()}}));
-        """
-
-        videos_result = driver.execute_async_script(fetch_videos_script)
-        if 'error' in videos_result:
-            raise RuntimeError('Browser fetch error for videos: ' + videos_result['error'])
-        if videos_result.get('status') != 200:
-            raise RuntimeError(f"Unexpected status for videos {videos_result['status']}: {videos_result.get('text')}")
-
-        videos_data = json.loads(videos_result['text'])
-        next_page_token = videos_data.get('nextPageToken')
-        print(f"API Response: {json.dumps(videos_data, indent=2)}")  # Add debug logging
-        all_data = {'videos': [], 'views': {}, 'thumbnails': []}
-
-        # Process first page of videos
-        for video in videos_data.get('videos', []):
-            video_id = video.get('videoId')
-            if not video_id:
-                continue
-
-            # Add video data
-            video_data = {
-                'youtube_id': video_id,
-                'title': video.get('title', ''),
-                'description': video.get('description', ''),
-                'date_published': video.get('timePublishedSeconds', ''),
-                'channel_id': video.get('channelId', ''),
-                'draft_status': video.get('draftStatus', ''),
-                'length_seconds': video.get('lengthSeconds', ''),
-                'time_created_seconds': video.get('timeCreatedSeconds', ''),
-                'watch_url': video.get('watchUrl', ''),
-                'user_set_monetization': video.get('monetization', {}).get('adMonetization', {}).get('userSetMonetization', ''),
-                'ad_friendly_review_decision': video.get('selfCertification', {}).get('adFriendlyReviewDecision', ''),
-                'view_count': video.get('publicMetrics', {}).get('viewCount', ''),
-                'comment_count': video.get('publicMetrics', {}).get('commentCount', ''),
-                'like_count': video.get('publicMetrics', {}).get('likeCount', ''),
-                'external_view_count': video.get('publicMetrics', {}).get('externalViewCount', ''),
-                'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False),
-                'thumbnail_data': {
-                    'url': video.get('thumbnailDetails', {}).get('thumbnails', [])[-1].get('url') if video.get('thumbnailDetails', {}).get('thumbnails') else None
-                }
-            }
-            all_data['videos'].append(video_data)
-
-        # If we have a next page token, make a second API call
-        if next_page_token:
-            # Update the request body with the next page token
-            video_list_body['pageToken'] = next_page_token
-            
-            # Make the second API call
-            fetch_videos_script = f"""
-            const body = {json.dumps(video_list_body)};
-            const done = arguments[arguments.length - 1];
-            fetch('https://studio.youtube.com/youtubei/v1/creator/list_creator_videos?alt=json', {{
-                method: 'POST',
-                credentials: 'include',
-                headers: {{
-                    'Content-Type': 'application/json',
-                    'Authorization': '{auth_value}',
-                    'Cookie': '{cookie_str}',
-                    'x-goog-authuser': '0',
-                    'x-origin': 'https://studio.youtube.com'
-                }},
-                body: JSON.stringify(body)
-            }})
-            .then(r => r.text().then(txt => done({{status: r.status, text: txt}})))
-            .catch(err => done({{error: err.toString()}}));
-            """
-
-            videos_result = driver.execute_async_script(fetch_videos_script)
-            if 'error' in videos_result:
-                response.add_message(f"Error fetching second page of videos: {videos_result['error']}")
-            elif videos_result.get('status') == 200:
-                second_page_data = json.loads(videos_result['text'])
-                print(f"Second page API Response: {json.dumps(second_page_data, indent=2)}")
-                
-                # Process second page of videos
-                for video in second_page_data.get('videos', []):
-                    video_id = video.get('videoId')
-                    if not video_id:
-                        continue
-
-                    # Add video data
-                    video_data = {
-                        'youtube_id': video_id,
-                        'title': video.get('title', ''),
-                        'description': video.get('description', ''),
-                        'date_published': video.get('timePublishedSeconds', ''),
-                        'channel_id': video.get('channelId', ''),
-                        'draft_status': video.get('draftStatus', ''),
-                        'length_seconds': video.get('lengthSeconds', ''),
-                        'time_created_seconds': video.get('timeCreatedSeconds', ''),
-                        'watch_url': video.get('watchUrl', ''),
-                        'user_set_monetization': video.get('monetization', {}).get('adMonetization', {}).get('userSetMonetization', ''),
-                        'ad_friendly_review_decision': video.get('selfCertification', {}).get('adFriendlyReviewDecision', ''),
-                        'view_count': video.get('publicMetrics', {}).get('viewCount', ''),
-                        'comment_count': video.get('publicMetrics', {}).get('commentCount', ''),
-                        'like_count': video.get('publicMetrics', {}).get('likeCount', ''),
-                        'external_view_count': video.get('publicMetrics', {}).get('externalViewCount', ''),
-                        'is_shorts_renderable': video.get('shorts', {}).get('isShortsRenderable', False),
-                        'thumbnail_data': {
-                            'url': video.get('thumbnailDetails', {}).get('thumbnails', [])[-1].get('url') if video.get('thumbnailDetails', {}).get('thumbnails') else None
-                        }
-                    }
-                    all_data['videos'].append(video_data)
+        # Setup authentication
+        auth_value, cookie_str = get_auth_headers(driver)
+        video_list_body, views_body = setup_authentication(driver, auth_value, cookie_str)
+        all_data = fetch_videos_data(driver, auth_value, cookie_str, video_list_body, response)
 
         # Process views for all videos
         for video in all_data['videos']:
             video_id = video['youtube_id']
-            # Update views body with current video ID
-            views_body['screenConfig']['entity']['videoId'] = video_id
-            print(f"Debug - Updated views body with video ID: {video_id}")
-
-            # Request views for this video
-            fetch_views_script = f"""
-            const body = {json.dumps(views_body)};
-            const done = arguments[arguments.length - 1];
-            fetch('https://studio.youtube.com/youtubei/v1/yta_web/get_screen?alt=json', {{
-                method: 'POST',
-                credentials: 'include',
-                headers: {{
-                    'Content-Type': 'application/json',
-                    'Authorization': '{auth_value}',
-                    'Cookie': '{cookie_str}',
-                    'x-goog-authuser': '0',
-                    'x-origin': 'https://studio.youtube.com'
-                }},
-                body: JSON.stringify(body)
-            }})
-            .then(r => r.text().then(txt => done({{status: r.status, text: txt}})))
-            .catch(err => done({{error: err.toString()}}));
-            """
-
-            views_result = driver.execute_async_script(fetch_views_script)
-            if 'error' in views_result:
-                response.add_message(f"Error fetching views for video {video_id}: {views_result['error']}")
-                continue
-            if views_result.get('status') != 200:
-                response.add_message(f"Unexpected status for video {video_id}: {views_result['status']}")
-                continue
-
-            # Process views data
-            views_data = json.loads(views_result['text'])
-            external_views_data = views_data['cards'][1]['keyMetricCardData']['keyMetricTabs'][0]['primaryContent']['mainSeries']['datums']
-            
-            # Convert timestamps to dates and store views
-            views = []
-            for datum in external_views_data:
-                timestamp = datum['x']
-                date = datetime.fromtimestamp(timestamp / 1000).strftime('%Y-%m-%d')
-                views.append({
-                    'date': date,
-                    'millis_data': timestamp,
-                    'daily_view_count': datum['y']
-                })
-            # Sort views by date before returning
-            views.sort(key=lambda x: x['millis_data'])
-            
-            # Store views using the video_id from the API response
-            all_data['views'][video_id] = views
-            print(f"Debug - Stored views for video {video_id}: {len(views)} data points")
-            print(f"Debug - Current views data structure: {all_data['views']}")
+            views = fetch_views_for_video(driver, video_id, views_body, auth_value, cookie_str, response)
+            if views:
+                all_data['views'][video_id] = views
+                print(f"Debug - Current views data structure: {all_data['views']}")
 
             # Small delay between requests
             time.sleep(1)
@@ -744,16 +545,6 @@ def fetch_youtube_data(username: str = None, password: str = None, two_fa_code: 
         error_msg = f"Error: {str(e)}\n{traceback.format_exc()}"
         response.set_error(error_msg)
         return response.to_json()
-
-def load_request_body(filename):
-    """Load a request body from a JSON file"""
-    file_path = os.path.join(os.path.dirname(__file__), 'request_body', filename)
-    try:
-        with open(file_path, 'r') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"Error loading request body from {filename}: {str(e)}")
-        return None
 
 if __name__ == '__main__':
     try:
