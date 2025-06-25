@@ -1,7 +1,7 @@
 <div class="container mx-auto px-4 py-8">
   <h1 class="text-3xl font-bold mb-6">Video Performance Dashboard</h1>
   
-  <!-- Timeline Control Panel -->
+  
   <div class="bg-white shadow-sm rounded-lg p-6 mb-6 bg-red-500">
     <h2 class="text-xl font-semibold mb-4">Timeline Control Panel</h2>
     <div class="flex items-center space-x-4">
@@ -23,7 +23,7 @@
     </div>
   </div>
 
-  <!-- Video Ranking Grid -->
+  
   <div class="bg-white shadow-sm rounded-lg overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200">
       <h2 class="text-xl font-semibold">Video Rankings</h2>
@@ -255,7 +255,7 @@
           <tbody class="bg-white divide-y divide-gray-200">
             <% @video_rankings.each do |ranking| %>
               <tr class="hover:bg-gray-50 cursor-pointer" onclick="handleRowClick(event, '<%= video_path(ranking.video) %>')">
-                <!-- Ranking Badge -->
+                
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium number-font
@@ -268,7 +268,7 @@
                   </div>
                 </td>
 
-                <!-- Thumbnail -->
+                
                 <td class="px-2 py-4 whitespace-nowrap">
                   <div class="flex-shrink-0 h-10 w-18">
                     <% if ranking.video.thumbnails.any? %>
@@ -299,7 +299,7 @@
                   </div>
                 </td>
 
-                <!-- Video Title -->
+                
                 <td id="title_column_cell" class="px-6 py-4">
                   <div class="text-sm font-medium text-gray-900">
                     <a href="<%= ranking.video.watch_url %>" 
@@ -311,12 +311,12 @@
                   </div>
                 </td>
 
-                <!-- Views Since Published -->
+                
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
                   <%= number_with_delimiter(ranking.views_since_published) %>
                 </td>
 
-                <!-- Upload Date -->
+                
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <% if ranking.video.date_published.present? %>
                     <%= time_ago_in_words_custom(ranking.video.date_published) %>
@@ -325,12 +325,12 @@
                   <% end %>
                 </td>
 
-                <!-- Percentile -->
+                
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
                   <%= number_with_precision(ranking.percentile, precision: 1) %>%
                 </td>
 
-                <!-- Rank Change Since Day 1 -->
+                
                 <td class="px-6 py-4 whitespace-nowrap">
                   <% if @selected_days == 1 %>
                     <span class="text-sm text-gray-400">-</span>
@@ -359,7 +359,7 @@
                   <% end %>
                 </td>
 
-                <!-- Day Over Day Rank Change -->
+                
                 <td class="px-6 py-4 whitespace-nowrap">
                   <% if ranking.day_over_day_rank_change %>
                     <% change = ranking.day_over_day_rank_change %>
@@ -386,7 +386,7 @@
                   <% end %>
                 </td>
 
-                <!-- Rank Slope Since Day 1 -->
+                
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
                   <% if ranking.rank_slope_since_day_1 %>
                     <span class="<%= ranking.rank_slope_since_day_1 > 0 ? 'text-green-600' : ranking.rank_slope_since_day_1 < 0 ? 'text-red-600' : 'text-gray-600' %>">
@@ -397,7 +397,7 @@
                   <% end %>
                 </td>
 
-                <!-- Percentile Change Since Day 1 -->
+                
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
                   <% if @selected_days == 1 %>
                     <span class="text-sm text-gray-400">-</span>
@@ -410,7 +410,7 @@
                   <% end %>
                 </td>
 
-                <!-- Three Day Smoothed Average Rank Change -->
+                
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 number-font">
                   <% if ranking.three_day_smoothed_average_rank_change %>
                     <span class="<%= ranking.three_day_smoothed_average_rank_change > 0 ? 'text-green-600' : ranking.three_day_smoothed_average_rank_change < 0 ? 'text-red-600' : 'text-gray-600' %>">
@@ -426,7 +426,7 @@
         </table>
       </div>
 
-      <!-- Pagination -->
+      
       <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
         <%= paginate @video_rankings %>
       </div>
@@ -444,7 +444,7 @@
   </div>
 </div>
 
-<!-- Global Tooltip Container -->
+
 <div id="global-tooltip" class="fixed hidden z-[99999]">
   <div class="bg-gray-800 text-white rounded-lg p-6 shadow-xl max-w-sm" style="background-color: #374151;">
     <div class="space-y-3">
@@ -470,7 +470,7 @@
       </div>
     </div>
   </div>
-  <!-- Arrow -->
+  
   <div class="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style="border-top-color: #374151;"></div>
 </div>
 

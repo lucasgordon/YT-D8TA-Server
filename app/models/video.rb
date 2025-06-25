@@ -18,22 +18,18 @@ class Video < ApplicationRecord
     username = ENV["YOUTUBE_USERNAME"]
     password = ENV["YOUTUBE_PASSWORD"]
 
-    # First check auth state
     cmd = [ "python3", script_path.to_s ]
-    raw_result = `#{cmd.join(" ")} 2>&1`  # Capture both stdout and stderr
+    raw_result = `#{cmd.join(" ")} 2>&1`
 
     begin
-      # Find the last line that contains valid JSON
       json_line = raw_result.split("\n").reverse.find { |line| line.strip.start_with?("{") && line.strip.end_with?("}") }
       result = JSON.parse(json_line)
 
       case result["auth_state"]
       when "AUTHENTICATED"
-        # Already authenticated, fetch data
         process_result(result)
 
       when "LOGIN_REQUIRED"
-        # Need to provide credentials
         cmd = [ "python3", script_path.to_s, username, password ]
         raw_result = `#{cmd.join(" ")} 2>&1`
         json_line = raw_result.split("\n").reverse.find { |line| line.strip.start_with?("{") && line.strip.end_with?("}") }
@@ -42,14 +38,12 @@ class Video < ApplicationRecord
 
       when "2FA_REQUIRED"
         if two_fa_code
-          # We have the 2FA code, use it with the saved challenge URL
           cmd = [ "python3", script_path.to_s, username, password, two_fa_code ]
           raw_result = `#{cmd.join(" ")} 2>&1`
           json_line = raw_result.split("\n").reverse.find { |line| line.strip.start_with?("{") && line.strip.end_with?("}") }
           result = JSON.parse(json_line)
           process_result(result)
         else
-          # Return the 2FA required state and challenge URL
           result
         end
 
@@ -65,7 +59,6 @@ class Video < ApplicationRecord
     end
   end
 
-  # Class methods for index action
   def self.available_days
     VideoResultsSincePublished
       .where("days_since_published <= ?", 1500)
@@ -75,16 +68,13 @@ class Video < ApplicationRecord
   end
 
   def self.get_video_rankings(selected_days, sort_column, sort_direction, page, per_page)
-    # Validate sort column to prevent SQL injection
     allowed_sort_columns = %w[rank views_since_published percentile rank_change_since_day_1
                              day_over_day_rank_change rank_slope_since_day_1
                              percentile_change_since_day_1 three_day_smoothed_average_rank_change date_published]
     sort_column = "rank" unless allowed_sort_columns.include?(sort_column)
 
-    # Validate sort direction
     sort_direction = "asc" unless %w[asc desc].include?(sort_direction)
 
-    # Get video rankings for the selected day range with pagination and sorting
     base_query = VideoResultsSincePublished
       .includes(:video)
       .where(days_since_published: selected_days)
@@ -114,7 +104,6 @@ class Video < ApplicationRecord
       .index_by(&:video_id)
   end
 
-  # Instance methods for show action
   def selected_daily_ranking(selected_date)
     return nil unless date_published.present?
 
@@ -129,7 +118,6 @@ class Video < ApplicationRecord
   def available_time_ranges
     ranges = []
 
-    # Check if we have daily rankings data
     if video_daily_rankings.any?
       earliest_date = video_daily_rankings.minimum(:date)
       days_of_data = (Date.today - earliest_date).to_i if earliest_date
@@ -139,10 +127,8 @@ class Video < ApplicationRecord
       ranges << "1_year" if days_of_data && days_of_data >= 365
     end
 
-    # Always show "since published" if we have any performance data
     ranges << "since_published" if performance_over_time.any?
 
-    # If no ranges are available, default to 30 days
     ranges = [ "30_days" ] if ranges.empty?
 
     ranges
@@ -156,7 +142,7 @@ class Video < ApplicationRecord
       1.year.ago.to_date
     when "since_published"
       date_published&.to_date || 1.year.ago.to_date
-    else # '30_days' default
+    else
       30.days.ago.to_date
     end
   end
@@ -177,22 +163,18 @@ class Video < ApplicationRecord
     performance_data = performance_over_time
     return {} unless performance_data.any?
 
-    # Calculate rank trend (positive means improving rank, negative means declining)
     first_rank = performance_data.first.rank
     last_rank = performance_data.last.rank
     rank_trend = first_rank - last_rank
     rank_trend_direction = rank_trend > 0 ? "improving" : rank_trend < 0 ? "declining" : "stable"
 
-    # Calculate percentile trend
     first_percentile = performance_data.first.percentile
     last_percentile = performance_data.last.percentile
     percentile_trend = last_percentile - first_percentile
     percentile_trend_direction = percentile_trend > 0 ? "improving" : percentile_trend < 0 ? "declining" : "stable"
 
-    # Find peak performance day
     peak_performance = performance_data.order(:rank).first
 
-    # Calculate average daily rank change
     rank_changes = performance_data.where.not(rank_change_since_day_1: nil).pluck(:rank_change_since_day_1)
     avg_daily_rank_change = rank_changes.any? ? rank_changes.sum.to_f / rank_changes.length : 0
 
@@ -222,23 +204,16 @@ class Video < ApplicationRecord
     total_views = view_count.to_i
     avg_daily_views = views.average(:single_day_views)&.round(0) || 0
 
-    # Calculate how this video compares to all other videos in terms of total views
     total_videos_count = Video.count
 
-    # Convert view_count to integer for proper numerical comparison since it's stored as string
     current_view_count_int = view_count.to_i
 
-    # Use a more accurate ranking method that handles ties properly
-    # This counts how many videos have strictly more views than this one
     videos_with_more_views = Video.where("CAST(view_count AS INTEGER) > ?", current_view_count_int).count
 
-    # For the rank, we add 1 to account for 1-based ranking
     view_rank = videos_with_more_views + 1
 
-    # Calculate videos with less views (strictly less)
     videos_with_less_views = Video.where("CAST(view_count AS INTEGER) < ?", current_view_count_int).count
 
-    # Calculate percentile based on rank
     view_percentile = ((total_videos_count - view_rank + 1).to_f / total_videos_count * 100).round(1)
 
     {
@@ -275,7 +250,6 @@ class Video < ApplicationRecord
   private
 
   def self.process_result(result)
-    # Log script messages
     if result["messages"]
       puts "Script messages:"
       result["messages"].each do |msg|
@@ -287,13 +261,10 @@ class Video < ApplicationRecord
       raise "Python script error: #{result['error']}"
     end
 
-    # Process the data
     if result["videos"]
-      # Pre-load existing videos to avoid N+1 queries
       existing_video_ids = result["videos"].map { |v| v["youtube_id"] }
       existing_videos = Video.where(youtube_id: existing_video_ids).index_by(&:youtube_id)
 
-      # Pre-load existing views for all videos to avoid N+1 queries
       existing_views = {}
       if result["views"]
         result["views"].each do |youtube_id, view_data_array|
@@ -302,16 +273,12 @@ class Video < ApplicationRecord
         end
       end
 
-      # Pre-load existing thumbnails
       existing_thumbnails = Thumbnail.where(youtube_id: existing_video_ids).index_by(&:youtube_id)
 
-      # Use transaction for better performance
       ActiveRecord::Base.transaction do
         result["videos"].each do |video_data|
-          # Calculate date_published first to check if we should skip this record
           date_published = Time.at(video_data["date_published"].to_i)
 
-          # Skip videos published before 2020
           next if date_published < Time.new(2020, 1, 1)
 
           video_attributes = {
@@ -334,14 +301,11 @@ class Video < ApplicationRecord
           }
 
           if existing_videos[video_data["youtube_id"]]
-            # Update existing video
             existing_videos[video_data["youtube_id"]].update!(video_attributes)
           else
-            # Create new video
             Video.create!(video_attributes)
           end
 
-          # Process thumbnail data
           if video_data["thumbnail_data"] && video_data["thumbnail_data"]["url"]
             thumbnail_attributes = {
               youtube_id: video_data["youtube_id"],
@@ -351,31 +315,25 @@ class Video < ApplicationRecord
             if existing_thumbnails[video_data["youtube_id"]]
               existing_thumbnails[video_data["youtube_id"]].update!(thumbnail_attributes)
             else
-              # Use find_or_initialize_by for consistency
               thumbnail = Thumbnail.find_or_initialize_by(youtube_id: video_data["youtube_id"])
               thumbnail.assign_attributes(thumbnail_attributes)
               thumbnail.save!
             end
           end
 
-          # Process views data
           if result["views"] && result["views"][video_data["youtube_id"]]
             video_views = existing_views[video_data["youtube_id"]] || {}
 
-            # Sort views by date and exclude the last day since we can't calculate its increment
             sorted_views = result["views"][video_data["youtube_id"]].sort_by { |v| v["date"] }
-            views_to_process = sorted_views[0...-1] # Exclude the last day
+            views_to_process = sorted_views[0...-1]
 
             views_to_process.each do |view_data|
-              # Calculate single_day_views as the difference between this day and previous day
               previous_date = (Date.parse(view_data["date"]) - 1.day).strftime("%Y-%m-%d")
               previous_view = video_views[previous_date]
 
               single_day_views = if previous_view && view_data["daily_view_count"].to_i > 0
                 view_data["daily_view_count"].to_i - previous_view.daily_view_count.to_i
               else
-                # If no previous day's data, we can't calculate the increment
-                # Set to 0 instead of using the total cumulative views
                 0
               end
 
@@ -390,7 +348,6 @@ class Video < ApplicationRecord
               if video_views[view_data["date"]]
                 video_views[view_data["date"]].update!(view_attributes)
               else
-                # Use find_or_initialize_by to avoid duplicate record errors
                 view = View.find_or_initialize_by(youtube_id: video_data["youtube_id"], date: view_data["date"])
                 view.assign_attributes(view_attributes)
                 view.save!

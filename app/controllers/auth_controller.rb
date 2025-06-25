@@ -2,7 +2,6 @@ class AuthController < ApplicationController
   skip_before_action :require_login, only: [ :login, :authenticate ]
 
   def login
-    # Redirect to videos index if already logged in
     redirect_to videos_path if current_user
   end
 

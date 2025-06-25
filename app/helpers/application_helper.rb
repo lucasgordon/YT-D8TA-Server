@@ -2,7 +2,6 @@ module ApplicationHelper
   def time_ago_in_words_custom(date)
     return "-" unless date
 
-    # Convert to Date object if it's a Time object or string
     if date.is_a?(Time)
       date = date.to_date
     elsif date.is_a?(String)

@@ -1,5 +1,5 @@
 <div class="min-h-screen bg-gray-50">
-  <!-- Header with back button -->
+  
     <div class="container mx-auto px-4 py-4">
       <div class="bg-white rounded-xl shadow-sm p-6">
         <div class="flex items-center justify-between">
@@ -28,16 +28,16 @@
 
 
   <div class="container mx-auto px-4 py-8">
-    <!-- Main Video Information Card -->
+    
     <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-8">
       <div class="md:flex">
-        <!-- Thumbnail Section -->
+        
         <div class="md:w-1/3">
           <div class="relative h-full">
             <% if @thumbnail %>
-              <!-- Blurred background -->
+              
               <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('<%= @thumbnail.url %>'); filter: blur(20px); opacity: 0.3;"></div>
-              <!-- Centered thumbnail -->
+              
               <div class="relative h-full flex items-center justify-center p-4">
                 <img src="<%= @thumbnail.url %>" alt="Video thumbnail" class="max-w-full max-h-full object-contain rounded-lg shadow-sm">
               </div>
@@ -61,7 +61,7 @@
           </div>
         </div>
 
-        <!-- Video Details Section -->
+        
         <div class="md:w-2/3 p-6">
           <div class="mb-6">
             <h2 class="text-2xl font-bold text-gray-900 mb-2"><%= @video.title %></h2>
@@ -95,10 +95,10 @@
       </div>
     </div>
 
-    <!-- Stats Boxes Below Thumbnail -->
+    
     <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-8">
       <div class="p-6">
-        <!-- Key Stats Grid -->
+        
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
           <div class="text-center p-4 bg-gray-50 rounded-lg">
             <div class="flex flex-row items-center justify-center">
@@ -155,9 +155,9 @@
       </div>
     </div>
 
-    <!-- Performance Metrics Grid -->
+    
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-      <!-- Ranking Performance -->
+      
       <div class="bg-white rounded-xl shadow-sm p-6">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-bold text-gray-900 flex items-center">
@@ -359,7 +359,7 @@
         <% end %>
       </div>
 
-      <!-- View Statistics -->
+      
       <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
           <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -408,7 +408,7 @@
       </div>
     </div>
 
-    <!-- Performance Insights Summary -->
+    
     <% if @performance_over_time.any? %>
       <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
         <h3 class="text-xl font-bold text-gray-900 mb-6">Growth Trajectory Analysis</h3>
@@ -419,7 +419,7 @@
           </p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <!-- Best Rank -->
+          
           <div class="text-center p-4 bg-blue-50 rounded-t-lg md:rounded-tl-lg md:rounded-bl-lg lg:rounded-lg">
             <div class="text-2xl font-bold text-blue-600 number-font">
               #<%= @performance_over_time.minimum(:rank) %>
@@ -433,7 +433,7 @@
             <% end %>
           </div>
 
-          <!-- Worst Rank -->
+          
           <div class="text-center p-4 bg-red-50 md:rounded-tr-lg md:rounded-br-lg lg:rounded-lg">
             <div class="text-2xl font-bold text-red-600 number-font">
               #<%= @performance_over_time.maximum(:rank) %>
@@ -448,7 +448,7 @@
             <% end %>
           </div>
 
-          <!-- Best Percentile -->
+          
           <div class="text-center p-4 bg-green-50 md:rounded-tl-lg md:rounded-bl-lg lg:rounded-lg">
             <div class="text-2xl font-bold text-green-600 number-font">
               <%= number_with_precision(@performance_over_time.maximum(:percentile), precision: 1) %>%
@@ -462,7 +462,7 @@
             <% end %>
           </div>
 
-          <!-- Total Growth Period -->
+          
           <div class="text-center p-4 bg-purple-50 rounded-b-lg md:rounded-tr-lg md:rounded-br-lg lg:rounded-lg">
             <div class="text-2xl font-bold text-purple-600 number-font">
               <%= @performance_over_time.count %>
@@ -476,7 +476,7 @@
       </div>
     <% end %>
 
-    <!-- Trend Analysis -->
+    
     <% if @performance_over_time.any? && defined?(@rank_trend) %>
       <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
         <h3 class="text-xl font-bold text-gray-900 mb-6">Growth Trajectory Trends</h3>
@@ -486,7 +486,7 @@
           </p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Overall Rank Trend -->
+          
           <div class="p-4 bg-gray-50 rounded-t-lg md:rounded-tl-lg md:rounded-bl-lg lg:rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-gray-700">Overall Growth Trend</span>
@@ -517,7 +517,7 @@
             </div>
           </div>
 
-          <!-- Percentile Trend -->
+          
           <div class="p-4 bg-gray-50 md:rounded-tr-lg md:rounded-br-lg lg:rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-gray-700">Percentile Trend</span>
@@ -548,7 +548,7 @@
             </div>
           </div>
 
-          <!-- Average Daily Rank Change -->
+          
           <div class="p-4 bg-gray-50 rounded-b-lg md:col-span-2 lg:col-span-1 lg:rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-gray-700">Avg Daily Rank Change</span>
@@ -564,9 +564,9 @@
       </div>
     <% end %>
 
-    <!-- Enhanced Performance Charts -->
+    
     <% if @daily_rankings.any? || @recent_views.any? || @performance_over_time.any? %>
-      <!-- Time Range Selector -->
+      
       <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-bold text-gray-900">Chart Time Range</h3>
@@ -591,9 +591,9 @@
         </div>
       </div>
 
-      <!-- Charts Grid -->
+      
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- Daily Rankings Chart -->
+        
         <% if @daily_rankings.any? %>
           <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Daily Performance vs All Videos</h3>
@@ -609,7 +609,7 @@
           </div>
         <% end %>
 
-        <!-- Daily Views Chart -->
+        
         <% if @recent_views.any? %>
           <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Daily Views</h3>
@@ -625,10 +625,10 @@
         <% end %>
       </div>
 
-      <!-- Performance Over Time Charts -->
+      
       <% if @performance_over_time.any? %>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <!-- Rank Over Time Chart -->
+          
           <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Growth Trajectory vs Similar Videos</h3>
             <div class="mb-4 p-3 bg-gray-50 rounded-lg">
@@ -642,7 +642,7 @@
             </div>
           </div>
 
-          <!-- Percentile Over Time Chart -->
+          
           <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Percentile vs Similar Videos</h3>
             <div class="mb-4 p-3 bg-gray-50 rounded-lg">
@@ -657,7 +657,7 @@
           </div>
         </div>
 
-        <!-- Views Since Published vs Rank Chart -->
+        
         <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
           <h3 class="text-xl font-bold text-gray-900 mb-6">Views vs Growth Ranking</h3>
           <div class="mb-4 p-3 bg-gray-50 rounded-lg">
@@ -671,9 +671,9 @@
           </div>
         </div>
 
-        <!-- Additional Performance Charts -->
+        
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <!-- Rank Change Over Time Chart -->
+          
           <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Growth Improvement Since Day 1</h3>
             <div class="mb-4 p-3 bg-gray-50 rounded-lg">
@@ -687,7 +687,7 @@
             </div>
           </div>
 
-          <!-- Cumulative Views Over Time Chart -->
+          
           <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Cumulative Views Over Time</h3>
             <div class="mb-4 p-3 bg-gray-50 rounded-lg">
@@ -702,9 +702,9 @@
           </div>
         </div>
 
-        <!-- New Analysis Charts -->
+        
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <!-- Daily vs Growth Performance Comparison -->
+          
           <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Daily vs Growth Performance</h3>
             <div class="mb-4 p-3 bg-gray-50 rounded-lg">
@@ -718,7 +718,7 @@
             </div>
           </div>
 
-          <!-- Growth Momentum Chart -->
+          
           <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Growth Momentum Analysis</h3>
             <div class="mb-4 p-3 bg-gray-50 rounded-lg">
