@@ -224,9 +224,21 @@ class Video < ApplicationRecord
 
     # Calculate how this video compares to all other videos in terms of total views
     total_videos_count = Video.count
-    videos_with_more_views = Video.where("view_count > ?", view_count).count
-    videos_with_less_views = Video.where("view_count < ?", view_count).count
+
+    # Convert view_count to integer for proper numerical comparison since it's stored as string
+    current_view_count_int = view_count.to_i
+
+    # Use a more accurate ranking method that handles ties properly
+    # This counts how many videos have strictly more views than this one
+    videos_with_more_views = Video.where("CAST(view_count AS INTEGER) > ?", current_view_count_int).count
+
+    # For the rank, we add 1 to account for 1-based ranking
     view_rank = videos_with_more_views + 1
+
+    # Calculate videos with less views (strictly less)
+    videos_with_less_views = Video.where("CAST(view_count AS INTEGER) < ?", current_view_count_int).count
+
+    # Calculate percentile based on rank
     view_percentile = ((total_videos_count - view_rank + 1).to_f / total_videos_count * 100).round(1)
 
     {

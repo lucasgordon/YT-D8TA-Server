@@ -29,8 +29,19 @@ class VideosController < ApplicationController
   def show
     @video = Video.find(params[:id])
 
-    # Get the selected date for daily rankings (default to today or latest available)
-    @selected_date = params[:selected_date]&.to_date || @video.video_daily_rankings.maximum(:date) || Date.today
+    # Get the selected date for daily rankings (default to day 7 since published)
+    if params[:selected_date].present?
+      @selected_date = params[:selected_date].to_date
+    else
+      # Default to day 7 since published
+      if @video.date_published.present?
+        publish_date = @video.date_published.is_a?(Time) ? @video.date_published.to_date : @video.date_published.to_date
+        day_7_date = publish_date + 7.days
+        @selected_date = day_7_date
+      else
+        @selected_date = @video.video_daily_rankings.maximum(:date) || Date.today
+      end
+    end
 
     # Get available dates for the date selector
     @available_dates = @video.video_daily_rankings.order(:date).pluck(:date)
