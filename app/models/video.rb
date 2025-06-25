@@ -16,15 +16,8 @@ class Video < ApplicationRecord
     username = ENV["YOUTUBE_USERNAME"]
     password = ENV["YOUTUBE_PASSWORD"]
 
-    # Use Python from virtual environment if it exists, otherwise fall back to system Python
-    python_cmd = if File.exist?(Rails.root.join("venv", "bin", "python"))
-      Rails.root.join("venv", "bin", "python").to_s
-    else
-      "python3"
-    end
-
     # First check auth state
-    cmd = [ python_cmd, script_path.to_s ]
+    cmd = [ "python3", script_path.to_s ]
     raw_result = `#{cmd.join(" ")} 2>&1`  # Capture both stdout and stderr
 
     begin
@@ -39,7 +32,7 @@ class Video < ApplicationRecord
 
       when "LOGIN_REQUIRED"
         # Need to provide credentials
-        cmd = [ python_cmd, script_path.to_s, username, password ]
+        cmd = [ "python3", script_path.to_s, username, password ]
         raw_result = `#{cmd.join(" ")} 2>&1`
         json_line = raw_result.split("\n").reverse.find { |line| line.strip.start_with?("{") && line.strip.end_with?("}") }
         result = JSON.parse(json_line)
@@ -48,7 +41,7 @@ class Video < ApplicationRecord
       when "2FA_REQUIRED"
         if two_fa_code
           # We have the 2FA code, use it with the saved challenge URL
-          cmd = [ python_cmd, script_path.to_s, username, password, two_fa_code ]
+          cmd = [ "python3", script_path.to_s, username, password, two_fa_code ]
           raw_result = `#{cmd.join(" ")} 2>&1`
           json_line = raw_result.split("\n").reverse.find { |line| line.strip.start_with?("{") && line.strip.end_with?("}") }
           result = JSON.parse(json_line)

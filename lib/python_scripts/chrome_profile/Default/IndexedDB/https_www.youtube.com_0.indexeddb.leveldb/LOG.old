@@ -1,10 +1,2 @@
-2025/06/20-00:43:19.236 1aeca3a Reusing MANIFEST /Users/gordon/Documents/youtube_data_project/server/server/lib/python_scripts/chrome_profile/Default/IndexedDB/https_www.youtube.com_0.indexeddb.leveldb/MANIFEST-000001
-2025/06/20-00:43:19.237 1aeca3a Recovering log #623
-2025/06/20-00:43:19.237 1aeca3a Reusing old log /Users/gordon/Documents/youtube_data_project/server/server/lib/python_scripts/chrome_profile/Default/IndexedDB/https_www.youtube.com_0.indexeddb.leveldb/000623.log 
-2025/06/20-00:43:19.237 1aeca3a Delete type=2 #622
-2025/06/20-00:43:19.624 1aeca3d Compacting 1@1 + 1@2 files
-2025/06/20-00:43:19.626 1aeca3d Generated table #627@1: 279 keys, 28987 bytes
-2025/06/20-00:43:19.626 1aeca3d Compacted 1@1 + 1@2 files => 28987 bytes
-2025/06/20-00:43:19.628 1aeca3d compacted to: files[ 0 0 1 0 0 0 0 ]
-2025/06/20-00:43:19.628 1aeca3d Delete type=2 #613
-2025/06/20-00:43:19.629 1aeca3d Delete type=2 #625
+2025/06/25-10:40:26.323 1c6de3d Creating DB /Users/gordon/Documents/youtube_data_project/server/server/lib/python_scripts/chrome_profile/Default/IndexedDB/https_www.youtube.com_0.indexeddb.leveldb since it was missing.
+2025/06/25-10:40:26.327 1c6de3d Reusing MANIFEST /Users/gordon/Documents/youtube_data_project/server/server/lib/python_scripts/chrome_profile/Default/IndexedDB/https_www.youtube.com_0.indexeddb.leveldb/MANIFEST-000001
