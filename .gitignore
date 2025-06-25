@@ -46,3 +46,7 @@ package-lock.json
 
 # Python virtual environment
 venv/
+
+export_to_production.sh
+
+lib/python_scripts/chrome_profile/*

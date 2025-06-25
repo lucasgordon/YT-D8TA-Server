@@ -2,6 +2,8 @@ require "json"
 require "open3"
 
 class Video < ApplicationRecord
+  include ActiveRecord::Import
+
   has_many :views, foreign_key: :youtube_id, primary_key: :youtube_id, dependent: :destroy
   has_many :thumbnails, foreign_key: :youtube_id, primary_key: :youtube_id, dependent: :destroy
   has_many :video_daily_rankings, dependent: :destroy
@@ -16,15 +18,8 @@ class Video < ApplicationRecord
     username = ENV["YOUTUBE_USERNAME"]
     password = ENV["YOUTUBE_PASSWORD"]
 
-    # Use Python from virtual environment if it exists, otherwise fall back to system Python
-    python_cmd = if File.exist?(Rails.root.join("venv", "bin", "python"))
-      Rails.root.join("venv", "bin", "python").to_s
-    else
-      "python3"
-    end
-
     # First check auth state
-    cmd = [ python_cmd, script_path.to_s ]
+    cmd = [ "python3", script_path.to_s ]
     raw_result = `#{cmd.join(" ")} 2>&1`  # Capture both stdout and stderr
 
     begin
@@ -39,7 +34,7 @@ class Video < ApplicationRecord
 
       when "LOGIN_REQUIRED"
         # Need to provide credentials
-        cmd = [ python_cmd, script_path.to_s, username, password ]
+        cmd = [ "python3", script_path.to_s, username, password ]
         raw_result = `#{cmd.join(" ")} 2>&1`
         json_line = raw_result.split("\n").reverse.find { |line| line.strip.start_with?("{") && line.strip.end_with?("}") }
         result = JSON.parse(json_line)
@@ -48,7 +43,7 @@ class Video < ApplicationRecord
       when "2FA_REQUIRED"
         if two_fa_code
           # We have the 2FA code, use it with the saved challenge URL
-          cmd = [ python_cmd, script_path.to_s, username, password, two_fa_code ]
+          cmd = [ "python3", script_path.to_s, username, password, two_fa_code ]
           raw_result = `#{cmd.join(" ")} 2>&1`
           json_line = raw_result.split("\n").reverse.find { |line| line.strip.start_with?("{") && line.strip.end_with?("}") }
           result = JSON.parse(json_line)
@@ -282,67 +277,113 @@ class Video < ApplicationRecord
 
     # Process the data
     if result["videos"]
-      result["videos"].each do |video_data|
-        video = find_or_initialize_by(youtube_id: video_data["youtube_id"])
+      # Pre-load existing videos to avoid N+1 queries
+      existing_video_ids = result["videos"].map { |v| v["youtube_id"] }
+      existing_videos = Video.where(youtube_id: existing_video_ids).index_by(&:youtube_id)
 
-        # Calculate date_published first to check if we should skip this record
-        date_published = Time.at(video_data["date_published"].to_i)
-
-        # Skip videos published before 2020
-        next if date_published < Time.new(2020, 1, 1)
-
-        video.assign_attributes(
-          title: video_data["title"],
-          description: video_data["description"],
-          date_published: date_published,
-          channel_id: video_data["channel_id"],
-          draft_status: video_data["draft_status"],
-          length_seconds: video_data["length_seconds"],
-          time_created_seconds: video_data["time_created_seconds"],
-          watch_url: video_data["watch_url"],
-          user_set_monetization: video_data["user_set_monetization"],
-          ad_friendly_review_decision: video_data["ad_friendly_review_decision"],
-          view_count: video_data["view_count"],
-          comment_count: video_data["comment_count"],
-          like_count: video_data["like_count"],
-          external_view_count: video_data["external_view_count"],
-          is_shorts_renderable: video_data["is_shorts_renderable"]
-        )
-        video.save!
-
-        # Process thumbnail data
-        if video_data["thumbnail_data"] && video_data["thumbnail_data"]["url"]
-          thumbnail = video.thumbnails.find_or_initialize_by(youtube_id: video_data["youtube_id"])
-          thumbnail.assign_attributes(
-            url: video_data["thumbnail_data"]["url"]
-          )
-          thumbnail.save!
+      # Pre-load existing views for all videos to avoid N+1 queries
+      existing_views = {}
+      if result["views"]
+        result["views"].each do |youtube_id, view_data_array|
+          dates = view_data_array.map { |v| v["date"] }
+          existing_views[youtube_id] = View.where(youtube_id: youtube_id, date: dates).index_by(&:date)
         end
+      end
 
-        # Process views data
-        puts "views: #{result["views"]["youtube_id"]}"
-        if result["views"] && result["views"][video_data["youtube_id"]]
-          result["views"][video_data["youtube_id"]].each do |view_data|
-            # Find the video by the youtube_id from the views data
-            video = find_by(youtube_id: video_data["youtube_id"])
-            next unless video  # Skip if video not found
+      # Pre-load existing thumbnails
+      existing_thumbnails = Thumbnail.where(youtube_id: existing_video_ids).index_by(&:youtube_id)
 
-            view = video.views.find_or_initialize_by(date: view_data["date"])
+      # Use transaction for better performance
+      ActiveRecord::Base.transaction do
+        result["videos"].each do |video_data|
+          # Calculate date_published first to check if we should skip this record
+          date_published = Time.at(video_data["date_published"].to_i)
 
-            # Calculate single_day_views as the difference between this day and previous day
-            previous_view = video.views.find_by(date: (Date.parse(view_data["date"]) - 1.day).strftime("%Y-%m-%d"))
-            single_day_views = if previous_view && view_data["daily_view_count"].to_i > 0
-              view_data["daily_view_count"].to_i - previous_view.daily_view_count.to_i
+          # Skip videos published before 2020
+          next if date_published < Time.new(2020, 1, 1)
+
+          video_attributes = {
+            youtube_id: video_data["youtube_id"],
+            title: video_data["title"],
+            description: video_data["description"],
+            date_published: date_published,
+            channel_id: video_data["channel_id"],
+            draft_status: video_data["draft_status"],
+            length_seconds: video_data["length_seconds"],
+            time_created_seconds: video_data["time_created_seconds"],
+            watch_url: video_data["watch_url"],
+            user_set_monetization: video_data["user_set_monetization"],
+            ad_friendly_review_decision: video_data["ad_friendly_review_decision"],
+            view_count: video_data["view_count"],
+            comment_count: video_data["comment_count"],
+            like_count: video_data["like_count"],
+            external_view_count: video_data["external_view_count"],
+            is_shorts_renderable: video_data["is_shorts_renderable"]
+          }
+
+          if existing_videos[video_data["youtube_id"]]
+            # Update existing video
+            existing_videos[video_data["youtube_id"]].update!(video_attributes)
+          else
+            # Create new video
+            Video.create!(video_attributes)
+          end
+
+          # Process thumbnail data
+          if video_data["thumbnail_data"] && video_data["thumbnail_data"]["url"]
+            thumbnail_attributes = {
+              youtube_id: video_data["youtube_id"],
+              url: video_data["thumbnail_data"]["url"]
+            }
+
+            if existing_thumbnails[video_data["youtube_id"]]
+              existing_thumbnails[video_data["youtube_id"]].update!(thumbnail_attributes)
             else
-              view_data["daily_view_count"].to_i
+              # Use find_or_initialize_by for consistency
+              thumbnail = Thumbnail.find_or_initialize_by(youtube_id: video_data["youtube_id"])
+              thumbnail.assign_attributes(thumbnail_attributes)
+              thumbnail.save!
             end
+          end
 
-            view.assign_attributes(
-              millis_data: view_data["millis_data"],
-              daily_view_count: view_data["daily_view_count"],
-              single_day_views: single_day_views
-            )
-            view.save!
+          # Process views data
+          if result["views"] && result["views"][video_data["youtube_id"]]
+            video_views = existing_views[video_data["youtube_id"]] || {}
+
+            # Sort views by date and exclude the last day since we can't calculate its increment
+            sorted_views = result["views"][video_data["youtube_id"]].sort_by { |v| v["date"] }
+            views_to_process = sorted_views[0...-1] # Exclude the last day
+
+            views_to_process.each do |view_data|
+              # Calculate single_day_views as the difference between this day and previous day
+              previous_date = (Date.parse(view_data["date"]) - 1.day).strftime("%Y-%m-%d")
+              previous_view = video_views[previous_date]
+
+              single_day_views = if previous_view && view_data["daily_view_count"].to_i > 0
+                view_data["daily_view_count"].to_i - previous_view.daily_view_count.to_i
+              else
+                # If no previous day's data, we can't calculate the increment
+                # Set to 0 instead of using the total cumulative views
+                0
+              end
+
+              view_attributes = {
+                youtube_id: video_data["youtube_id"],
+                date: view_data["date"],
+                millis_data: view_data["millis_data"],
+                daily_view_count: view_data["daily_view_count"],
+                single_day_views: single_day_views
+              }
+
+              if video_views[view_data["date"]]
+                video_views[view_data["date"]].update!(view_attributes)
+              else
+                # Use find_or_initialize_by to avoid duplicate record errors
+                view = View.find_or_initialize_by(youtube_id: video_data["youtube_id"], date: view_data["date"])
+                view.assign_attributes(view_attributes)
+                view.save!
+              end
+            end
           end
         end
       end
