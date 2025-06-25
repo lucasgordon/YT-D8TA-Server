@@ -10,7 +10,6 @@ class VideoResultsSincePublished < ApplicationRecord
   validates :percentile, presence: true, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }
   validates :video_id, uniqueness: { scope: :days_since_published, message: "already has results for this day" }
 
-  # Scopes for common queries
   scope :ordered_by_days, -> { order(days_since_published: :asc) }
   scope :for_video, ->(video_id) { where(video_id: video_id) }
   scope :recent, -> { order(days_since_published: :desc) }

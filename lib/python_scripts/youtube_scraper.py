@@ -323,11 +323,11 @@ def handle_2fa_challenge(driver, two_fa_code, response):
     """Handle 2FA challenge if present"""
     challenge_url = load_challenge_url()
     if challenge_url:
-        print(f"Found saved challenge URL: {challenge_url}")  # Debug log
+        print(f"Found saved challenge URL: {challenge_url}")  
         driver.get(challenge_url)
         time.sleep(2)
         if "challenge" in driver.current_url or "2fa" in driver.current_url.lower():
-            print("Detected 2FA challenge page")  # Debug log
+            print("Detected 2FA challenge page")  
             response.set_auth_state('2FA_REQUIRED')
             response.set_challenge_url(driver.current_url)
             save_challenge_url(driver.current_url)
@@ -388,24 +388,24 @@ def check_auth_state():
             return response.to_json()
         
         # If no challenge URL or it didn't work, try studio.youtube.com
-        print("Checking studio.youtube.com")  # Debug log
+        print("Checking studio.youtube.com")  
         driver.get("https://studio.youtube.com")
         time.sleep(2)
         
         current_url = driver.current_url
-        print(f"Current URL: {current_url}")  # Debug log
+        print(f"Current URL: {current_url}")  
         
         if "accounts.google.com" in current_url:
             if "challenge" in current_url or "2fa" in current_url.lower():
-                print("Detected 2FA challenge page")  # Debug log
+                print("Detected 2FA challenge page")  
                 response.set_auth_state('2FA_REQUIRED')
                 response.set_challenge_url(current_url)
                 save_challenge_url(current_url)
             else:
-                print("Detected login required")  # Debug log
+                print("Detected login required")  
                 response.set_auth_state('LOGIN_REQUIRED')
         else:
-            print("Detected already authenticated")  # Debug log
+            print("Detected already authenticated")  
             response.set_auth_state('AUTHENTICATED')
             
             # If authenticated, fetch the data
@@ -427,15 +427,15 @@ def check_auth_state():
 
                 response.set_data({'videos': all_data['videos'], 'views': all_data['views']})
             except Exception as e:
-                print(f"Error fetching data: {str(e)}")  # Debug log
+                print(f"Error fetching data: {str(e)}")  
                 print(f"Error type: {type(e)}")  # Print error type
                 print(f"Full error details: {traceback.format_exc()}")  # Print full traceback
                 response.add_message(f"Error fetching data: {str(e)}")
             
-        print(f"Final auth state: {response.auth_state}")  # Debug log
+        print(f"Final auth state: {response.auth_state}")  
         return response.to_json()
     except Exception as e:
-        print(f"Error in check_auth_state: {str(e)}")  # Debug log
+        print(f"Error in check_auth_state: {str(e)}")  
         response.set_error(f"Error checking auth state: {str(e)}")
         return response.to_json()
 

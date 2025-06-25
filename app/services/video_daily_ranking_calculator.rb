@@ -1,19 +1,16 @@
 class VideoDailyRankingCalculator
   def self.run_for_date(date)
-    # Cumulative: sum of all views up to and including this date
     cumulative_videos = Video.joins(:views)
       .select("videos.*, SUM(views.daily_view_count) as cumulative_views")
       .where("views.date <= ?", date)
       .group("videos.id")
       .order(Arel.sql("SUM(views.daily_view_count) DESC"))
 
-    # Daily: just today's views
     daily_videos = Video.joins(:views)
       .select("videos.*, views.daily_view_count as today_views")
       .where("views.date = ?", date)
       .order(Arel.sql("views.daily_view_count DESC"))
 
-    # Get total counts using separate queries
     cumulative_total = Video.joins(:views)
       .where("views.date <= ?", date)
       .distinct
@@ -24,12 +21,10 @@ class VideoDailyRankingCalculator
       .distinct
       .count
 
-    # Build a hash for quick lookup of previous day's rankings
     prev_rankings = VideoDailyRanking.where(date: date - 1).index_by(&:video_id)
 
     upserts = []
 
-    # Cumulative rankings
     cumulative_videos.each_with_index do |video, idx|
       cumulative_position = idx + 1
       cumulative_percentile = ((cumulative_total - cumulative_position).to_f / cumulative_total).round(2)
@@ -37,7 +32,6 @@ class VideoDailyRankingCalculator
       cumulative_rank_change = prev ? prev.cumulative_position - cumulative_position : nil
       cumulative_momentum = prev ? (prev.cumulative_rank_change || 0) + (cumulative_rank_change || 0) : nil
 
-      # Find daily ranking for this video
       daily_idx = daily_videos.find_index { |v| v.id == video.id }
       if daily_idx
         daily_position = daily_idx + 1
@@ -69,7 +63,6 @@ class VideoDailyRankingCalculator
       }
     end
 
-    # Upsert all rankings for the day
     VideoDailyRanking.upsert_all(upserts, unique_by: %i[video_id date])
   end
 

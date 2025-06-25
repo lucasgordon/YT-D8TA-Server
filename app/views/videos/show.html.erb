@@ -1,5 +1,5 @@
 <div class="min-h-screen bg-gray-50">
-  <!-- Header with back button -->
+  
     <div class="container mx-auto px-4 py-4">
       <div class="bg-white rounded-xl shadow-sm p-6">
         <div class="flex items-center justify-between">
@@ -28,16 +28,16 @@
 
 
   <div class="container mx-auto px-4 py-8">
-    <!-- Main Video Information Card -->
+    
     <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-8">
       <div class="md:flex">
-        <!-- Thumbnail Section -->
+        
         <div class="md:w-1/3">
           <div class="relative h-full">
             <% if @thumbnail %>
-              <!-- Blurred background -->
+              
               <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('<%= @thumbnail.url %>'); filter: blur(20px); opacity: 0.3;"></div>
-              <!-- Centered thumbnail -->
+              
               <div class="relative h-full flex items-center justify-center p-4">
                 <img src="<%= @thumbnail.url %>" alt="Video thumbnail" class="max-w-full max-h-full object-contain rounded-lg shadow-sm">
               </div>
@@ -61,7 +61,7 @@
           </div>
         </div>
 
-        <!-- Video Details Section -->
+        
         <div class="md:w-2/3 p-6">
           <div class="mb-6">
             <h2 class="text-2xl font-bold text-gray-900 mb-2"><%= @video.title %></h2>
@@ -95,16 +95,17 @@
       </div>
     </div>
 
-    <!-- Stats Boxes Below Thumbnail -->
+    
     <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-8">
       <div class="p-6">
-        <!-- Key Stats Grid -->
+        
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
           <div class="text-center p-4 bg-gray-50 rounded-lg">
             <div class="flex flex-row items-center justify-center">
               <div class="text-2xl font-bold text-gray-900 number-font">#<%= @view_rank %></div>
             </div>
-            <div class="text-sm text-gray-600">View Rank</div>
+            <div class="text-sm text-gray-600">Total Views Rank</div>
+            <div class="text-xs text-gray-500 mt-1">Among all videos</div>
           </div>
           <div class="text-center p-4 bg-gray-50 rounded-lg">
             <div class="text-2xl font-bold text-gray-900 number-font"><%= number_with_delimiter(@video.view_count) %></div>
@@ -154,16 +155,16 @@
       </div>
     </div>
 
-    <!-- Performance Metrics Grid -->
+    
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-      <!-- Ranking Performance -->
+      
       <div class="bg-white rounded-xl shadow-sm p-6">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-bold text-gray-900 flex items-center">
             <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
             </svg>
-            Ranking Performance
+            Growth Trajectory Analysis
           </h3>
           
           <% if @available_dates.any? %>
@@ -181,6 +182,13 @@
               </select>
             </div>
           <% end %>
+        </div>
+        
+        <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+          <p class="text-sm text-blue-800">
+            <strong>Note:</strong> This analysis compares this video's performance at specific ages (days since published) against other videos at the same age. 
+            This shows how well this video's growth trajectory compares to similar videos, regardless of when they were published.
+          </p>
         </div>
         
         <% if @selected_daily_ranking %>
@@ -351,7 +359,7 @@
         <% end %>
       </div>
 
-      <!-- View Statistics -->
+      
       <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
           <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -400,17 +408,23 @@
       </div>
     </div>
 
-    <!-- Performance Insights Summary -->
+    
     <% if @performance_over_time.any? %>
       <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
-        <h3 class="text-xl font-bold text-gray-900 mb-6">Performance Insights</h3>
+        <h3 class="text-xl font-bold text-gray-900 mb-6">Growth Trajectory Analysis</h3>
+        <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+          <p class="text-sm text-blue-800">
+            <strong>Note:</strong> These metrics compare this video's growth trajectory against other videos at the same age (days since published). 
+            This shows how well this video's growth pattern compares to similar videos, regardless of when they were published.
+          </p>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <!-- Best Rank -->
+          
           <div class="text-center p-4 bg-blue-50 rounded-t-lg md:rounded-tl-lg md:rounded-bl-lg lg:rounded-lg">
             <div class="text-2xl font-bold text-blue-600 number-font">
               #<%= @performance_over_time.minimum(:rank) %>
             </div>
-            <div class="text-sm text-gray-600">Best Rank Achieved</div>
+            <div class="text-sm text-gray-600">Best Growth Rank</div>
             <% best_rank_record = @performance_over_time.order(:rank).first %>
             <% if best_rank_record %>
               <div class="text-xs text-gray-500 mt-1">
@@ -419,13 +433,14 @@
             <% end %>
           </div>
 
-          <!-- Worst Rank -->
+          
           <div class="text-center p-4 bg-red-50 md:rounded-tr-lg md:rounded-br-lg lg:rounded-lg">
             <div class="text-2xl font-bold text-red-600 number-font">
               #<%= @performance_over_time.maximum(:rank) %>
             </div>
-            <div class="text-sm text-gray-600">Worst Rank</div>
-            <% worst_rank_record = @performance_over_time.order(:rank).last %>
+            <div class="text-sm text-gray-600">Worst Growth Rank</div>
+            <% worst_rank_value = @performance_over_time.maximum(:rank) %>
+            <% worst_rank_record = @performance_over_time.where(rank: worst_rank_value).first %>
             <% if worst_rank_record %>
               <div class="text-xs text-gray-500 mt-1">
                 Day <%= worst_rank_record.days_since_published %>
@@ -433,12 +448,12 @@
             <% end %>
           </div>
 
-          <!-- Best Percentile -->
+          
           <div class="text-center p-4 bg-green-50 md:rounded-tl-lg md:rounded-bl-lg lg:rounded-lg">
             <div class="text-2xl font-bold text-green-600 number-font">
               <%= number_with_precision(@performance_over_time.maximum(:percentile), precision: 1) %>%
             </div>
-            <div class="text-sm text-gray-600">Best Percentile</div>
+            <div class="text-sm text-gray-600">Best Growth Percentile</div>
             <% best_percentile_record = @performance_over_time.order(:percentile).last %>
             <% if best_percentile_record %>
               <div class="text-xs text-gray-500 mt-1">
@@ -447,12 +462,12 @@
             <% end %>
           </div>
 
-          <!-- Total Growth Period -->
+          
           <div class="text-center p-4 bg-purple-50 rounded-b-lg md:rounded-tr-lg md:rounded-br-lg lg:rounded-lg">
             <div class="text-2xl font-bold text-purple-600 number-font">
               <%= @performance_over_time.count %>
             </div>
-            <div class="text-sm text-gray-600">Data Points</div>
+            <div class="text-sm text-gray-600">Growth Data Points</div>
             <div class="text-xs text-gray-500 mt-1">
               <%= @performance_over_time.maximum(:days_since_published) %> days tracked
             </div>
@@ -461,15 +476,20 @@
       </div>
     <% end %>
 
-    <!-- Trend Analysis -->
+    
     <% if @performance_over_time.any? && defined?(@rank_trend) %>
       <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
-        <h3 class="text-xl font-bold text-gray-900 mb-6">Trend Analysis</h3>
+        <h3 class="text-xl font-bold text-gray-900 mb-6">Growth Trajectory Trends</h3>
+        <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+          <p class="text-sm text-blue-800">
+            <strong>Note:</strong> These trends show how this video's growth trajectory has changed relative to other videos at the same age (days since published).
+          </p>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Overall Rank Trend -->
+          
           <div class="p-4 bg-gray-50 rounded-t-lg md:rounded-tl-lg md:rounded-bl-lg lg:rounded-lg">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-gray-700">Overall Rank Trend</span>
+              <span class="text-sm font-medium text-gray-700">Overall Growth Trend</span>
               <div class="flex items-center">
                 <% if @rank_trend_direction == 'improving' %>
                   <svg class="h-4 w-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -497,7 +517,7 @@
             </div>
           </div>
 
-          <!-- Percentile Trend -->
+          
           <div class="p-4 bg-gray-50 md:rounded-tr-lg md:rounded-br-lg lg:rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-gray-700">Percentile Trend</span>
@@ -528,7 +548,7 @@
             </div>
           </div>
 
-          <!-- Average Daily Rank Change -->
+          
           <div class="p-4 bg-gray-50 rounded-b-lg md:col-span-2 lg:col-span-1 lg:rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-gray-700">Avg Daily Rank Change</span>
@@ -544,9 +564,9 @@
       </div>
     <% end %>
 
-    <!-- Enhanced Performance Charts -->
+    
     <% if @daily_rankings.any? || @recent_views.any? || @performance_over_time.any? %>
-      <!-- Time Range Selector -->
+      
       <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-bold text-gray-900">Chart Time Range</h3>
@@ -571,22 +591,33 @@
         </div>
       </div>
 
-      <!-- Charts Grid -->
+      
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- Daily Rankings Chart -->
+        
         <% if @daily_rankings.any? %>
           <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="text-xl font-bold text-gray-900 mb-6">Daily Rankings</h3>
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Daily Performance vs All Videos</h3>
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm text-gray-700">
+                <strong>Daily Position:</strong> This video's ranking on specific calendar dates compared to all videos tracked on those dates. 
+                Shows how well this video performed on particular days relative to the entire platform.
+              </p>
+            </div>
             <div class="h-64">
               <canvas id="rankingsChart"></canvas>
             </div>
           </div>
         <% end %>
 
-        <!-- Daily Views Chart -->
+        
         <% if @recent_views.any? %>
           <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Daily Views</h3>
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm text-gray-700">
+                <strong>Daily Views:</strong> Number of views this video received on each day. 
+              </p>
+            </div>
             <div class="h-64">
               <canvas id="viewsChart"></canvas>
             </div>
@@ -594,49 +625,110 @@
         <% end %>
       </div>
 
-      <!-- Performance Over Time Charts -->
+      
       <% if @performance_over_time.any? %>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <!-- Rank Over Time Chart -->
+          
           <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="text-xl font-bold text-gray-900 mb-6">Rank Performance Over Time</h3>
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Growth Trajectory vs Similar Videos</h3>
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm text-gray-700">
+                <strong>Growth Trajectory:</strong> Compares this video's performance at each "age" (days since published) against other videos at the same age. 
+                Shows how well this video's growth trajectory compares to similar videos, regardless of when they were published.
+              </p>
+            </div>
             <div class="h-64">
               <canvas id="rankOverTimeChart"></canvas>
             </div>
           </div>
 
-          <!-- Percentile Over Time Chart -->
+          
           <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="text-xl font-bold text-gray-900 mb-6">Percentile Performance Over Time</h3>
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Percentile vs Similar Videos</h3>
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm text-gray-700">
+                <strong>Percentile Performance:</strong> This video's percentile ranking at each age compared to other videos at the same age. 
+                Higher percentages = better performance relative to similar-aged videos.
+              </p>
+            </div>
             <div class="h-64">
               <canvas id="percentileOverTimeChart"></canvas>
             </div>
           </div>
         </div>
 
-        <!-- Views Since Published vs Rank Chart -->
+        
         <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
-          <h3 class="text-xl font-bold text-gray-900 mb-6">Views vs Rank Relationship</h3>
+          <h3 class="text-xl font-bold text-gray-900 mb-6">Views vs Growth Ranking</h3>
+          <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+            <p class="text-sm text-gray-700">
+              <strong>Views vs Growth Ranking:</strong> Shows the relationship between cumulative views and growth ranking performance. 
+              Each point represents a day since published, comparing total views gained vs ranking achieved among similar-aged videos.
+            </p>
+          </div>
           <div class="h-64">
             <canvas id="viewsVsRankChart"></canvas>
           </div>
         </div>
 
-        <!-- Additional Performance Charts -->
+        
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <!-- Rank Change Over Time Chart -->
+          
           <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="text-xl font-bold text-gray-900 mb-6">Rank Change Over Time</h3>
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Growth Improvement Since Day 1</h3>
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm text-gray-700">
+                <strong>Growth Improvement:</strong> How much this video's growth ranking has improved or declined since day 1. 
+                Positive values = rank improvement among similar-aged videos, negative values = rank decline.
+              </p>
+            </div>
             <div class="h-64">
               <canvas id="rankChangeChart"></canvas>
             </div>
           </div>
 
-          <!-- Cumulative Views Over Time Chart -->
+          
           <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Cumulative Views Over Time</h3>
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm text-gray-700">
+                <strong>Cumulative Views:</strong> Total views accumulated since the video was published. 
+                Shows the overall growth trajectory and identifies growth phases.
+              </p>
+            </div>
             <div class="h-64">
               <canvas id="cumulativeViewsChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Daily vs Growth Performance</h3>
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm text-gray-700">
+                <strong>Performance Comparison:</strong> Compares daily calendar performance vs growth trajectory performance. 
+                Shows if this video performs better on specific days or has consistent growth.
+              </p>
+            </div>
+            <div class="h-64">
+              <canvas id="performanceComparisonChart"></canvas>
+            </div>
+          </div>
+
+          
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Growth Momentum Analysis</h3>
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p class="text-sm text-gray-700">
+                <strong>Growth Momentum:</strong> Shows the rate of improvement in growth ranking over time. 
+                Helps identify if the video is gaining or losing momentum relative to similar videos.
+              </p>
+            </div>
+            <div class="h-64">
+              <canvas id="momentumChart"></canvas>
             </div>
           </div>
         </div>
@@ -674,7 +766,7 @@
               beginAtZero: false,
               title: {
                 display: true,
-                text: 'Rank Position'
+                text: 'Daily Position (vs All Videos)'
               }
             },
             x: {
@@ -694,7 +786,7 @@
                   return 'Date: ' + context[0].label;
                 },
                 label: function(context) {
-                  return 'Rank: ' + context.parsed.y;
+                  return 'Daily Position: ' + context.parsed.y;
                 }
               }
             }
@@ -763,7 +855,7 @@
         data: {
           labels: [<%= @performance_over_time.map { |r| "'#{r.days_since_published} days'" }.join(', ').html_safe %>],
           datasets: [{
-            label: 'Rank',
+            label: 'Growth Rank vs Similar Videos',
             data: [<%= @performance_over_time.map(&:rank).join(', ').html_safe %>],
             borderColor: 'rgb(239, 68, 68)',
             backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -780,7 +872,7 @@
               beginAtZero: false,
               title: {
                 display: true,
-                text: 'Rank'
+                text: 'Growth Rank (vs Similar Videos)'
               }
             },
             x: {
@@ -800,7 +892,7 @@
                   return context[0].label;
                 },
                 label: function(context) {
-                  return 'Rank: ' + context.parsed.y;
+                  return 'Growth Rank: ' + context.parsed.y;
                 }
               }
             }
@@ -815,7 +907,7 @@
         data: {
           labels: [<%= @performance_over_time.map { |r| "'#{r.days_since_published} days'" }.join(', ').html_safe %>],
           datasets: [{
-            label: 'Percentile',
+            label: 'Growth Percentile',
             data: [<%= @performance_over_time.map(&:percentile).join(', ').html_safe %>],
             borderColor: 'rgb(168, 85, 247)',
             backgroundColor: 'rgba(168, 85, 247, 0.1)',
@@ -832,7 +924,7 @@
               max: 100,
               title: {
                 display: true,
-                text: 'Percentile (%)'
+                text: 'Growth Percentile (%)'
               }
             },
             x: {
@@ -852,7 +944,7 @@
                   return context[0].label;
                 },
                 label: function(context) {
-                  return 'Percentile: ' + context.parsed.y.toFixed(1) + '%';
+                  return 'Growth Percentile: ' + context.parsed.y.toFixed(1) + '%';
                 }
               }
             }
@@ -866,7 +958,7 @@
         type: 'scatter',
         data: {
           datasets: [{
-            label: 'Views vs Rank',
+            label: 'Views vs Growth Rank',
             data: [
               <% @performance_over_time.each do |r| %>
                 {
@@ -889,7 +981,7 @@
               beginAtZero: false,
               title: {
                 display: true,
-                text: 'Rank'
+                text: 'Growth Rank'
               }
             },
             x: {
@@ -910,7 +1002,7 @@
                   return 'Views: ' + context[0].parsed.x.toLocaleString();
                 },
                 label: function(context) {
-                  return 'Rank: ' + context[0].parsed.y;
+                  return 'Growth Rank: ' + context[0].parsed.y;
                 }
               }
             }
@@ -925,7 +1017,7 @@
         data: {
           labels: [<%= @performance_over_time.map { |r| "'#{r.days_since_published} days'" }.join(', ').html_safe %>],
           datasets: [{
-            label: 'Rank Change Since Day 1',
+            label: 'Growth Rank Change Since Day 1',
             data: [<%= @performance_over_time.map { |r| r.rank_change_since_day_1 || 0 }.join(', ').html_safe %>],
             borderColor: 'rgb(245, 158, 11)',
             backgroundColor: 'rgba(245, 158, 11, 0.1)',
@@ -941,7 +1033,7 @@
               beginAtZero: true,
               title: {
                 display: true,
-                text: 'Rank Change'
+                text: 'Growth Rank Change'
               }
             },
             x: {
@@ -963,11 +1055,11 @@
                 label: function(context) {
                   const value = context.parsed.y;
                   if (value > 0) {
-                    return 'Rank Change: +' + value + ' positions';
+                    return 'Growth Rank Change: +' + value + ' positions';
                   } else if (value < 0) {
-                    return 'Rank Change: ' + value + ' positions';
+                    return 'Growth Rank Change: ' + value + ' positions';
                   } else {
-                    return 'Rank Change: No change';
+                    return 'Growth Rank Change: No change';
                   }
                 }
               }
@@ -1021,6 +1113,153 @@
                 },
                 label: function(context) {
                   return 'Views: ' + context.parsed.y.toLocaleString();
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Performance Comparison Chart (Daily vs Growth)
+      <% if @daily_rankings.any? && @performance_over_time.any? %>
+        const performanceComparisonCtx = document.getElementById('performanceComparisonChart').getContext('2d');
+        
+        // Create a mapping of days since published to daily rankings
+        const dailyRankingsByDays = {};
+        <% @daily_rankings.each do |ranking| %>
+          <% days_since_published = (@video.date_published.present? ? (ranking.date - @video.date_published.to_date).to_i : 0) %>
+          <% if days_since_published > 0 %>
+            dailyRankingsByDays[<%= days_since_published %>] = <%= ranking.daily_position %>;
+          <% end %>
+        <% end %>
+
+        // Get common days
+        const commonDays = Object.keys(dailyRankingsByDays).filter(day => 
+          [<%= @performance_over_time.map(&:days_since_published).join(', ').html_safe %>].includes(parseInt(day))
+        ).sort((a, b) => parseInt(a) - parseInt(b));
+
+        new Chart(performanceComparisonCtx, {
+          type: 'line',
+          data: {
+            labels: commonDays.map(day => day + ' days'),
+            datasets: [{
+              label: 'Daily Position',
+              data: commonDays.map(day => dailyRankingsByDays[day]),
+              borderColor: 'rgb(59, 130, 246)',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.1,
+              fill: false
+            }, {
+              label: 'Growth Rank',
+              data: [<%= @performance_over_time.map(&:rank).join(', ').html_safe %>],
+              borderColor: 'rgb(239, 68, 68)',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              tension: 0.1,
+              fill: false
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                reverse: true,
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: 'Rank Position'
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: 'Days Since Published'
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top'
+              },
+              tooltip: {
+                callbacks: {
+                  title: function(context) {
+                    return context[0].label;
+                  },
+                  label: function(context) {
+                    return context.dataset.label + ': ' + context.parsed.y;
+                  }
+                }
+              }
+            }
+          }
+        });
+      <% end %>
+
+      // Momentum Chart (Rate of rank improvement)
+      const momentumCtx = document.getElementById('momentumChart').getContext('2d');
+      const momentumData = [];
+      const momentumLabels = [];
+      
+      <% @performance_over_time.each_with_index do |record, index| %>
+        <% if index > 0 %>
+          <% prev_record = @performance_over_time[index - 1] %>
+          <% momentum = (prev_record.rank - record.rank).to_f / (record.days_since_published - prev_record.days_since_published) %>
+          momentumData.push(<%= momentum %>);
+          momentumLabels.push('<%= record.days_since_published %> days');
+        <% end %>
+      <% end %>
+
+      new Chart(momentumCtx, {
+        type: 'line',
+        data: {
+          labels: momentumLabels,
+          datasets: [{
+            label: 'Growth Momentum',
+            data: momentumData,
+            borderColor: 'rgb(16, 185, 129)',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.1,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Rank Improvement Rate'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Days Since Published'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                title: function(context) {
+                  return context[0].label;
+                },
+                label: function(context) {
+                  const value = context.parsed.y;
+                  if (value > 0) {
+                    return 'Momentum: +' + value.toFixed(2) + ' positions/day';
+                  } else if (value < 0) {
+                    return 'Momentum: ' + value.toFixed(2) + ' positions/day';
+                  } else {
+                    return 'Momentum: Stable';
+                  }
                 }
               }
             }
