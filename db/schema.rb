@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_17_031120) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_25_174852) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -81,6 +81,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_17_031120) do
     t.string "is_shorts_renderable"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["date_published"], name: "index_videos_on_date_published"
+    t.index ["view_count"], name: "index_videos_on_view_count"
     t.index ["youtube_id"], name: "index_videos_on_youtube_id", unique: true
   end
 
@@ -92,6 +94,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_17_031120) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "single_day_views"
+    t.index ["daily_view_count"], name: "index_views_on_daily_view_count"
+    t.index ["single_day_views"], name: "index_views_on_single_day_views"
     t.index ["youtube_id", "date"], name: "index_views_on_youtube_id_and_date", unique: true
     t.index ["youtube_id"], name: "index_views_on_youtube_id"
   end
