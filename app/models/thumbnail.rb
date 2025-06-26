@@ -82,7 +82,7 @@ class Thumbnail < ApplicationRecord
 
   def asset_path
     return nil unless filename.present?
-    "/assets/thumbnails/#{filename}"
+    "/thumbnails/#{filename}"
   end
 
   def display_url
@@ -96,6 +96,6 @@ class Thumbnail < ApplicationRecord
   private
 
   def thumbnails_directory
-    Rails.root.join("public", "assets", "thumbnails")
+    Rails.root.join("public", "thumbnails")
   end
 end
