@@ -86,7 +86,12 @@ class Thumbnail < ApplicationRecord
   end
 
   def display_url
+    if exists_locally?
       asset_path
+    else
+      # Fallback to original URL if local file doesn't exist
+      url
+    end
   end
 
   def exists_locally?
