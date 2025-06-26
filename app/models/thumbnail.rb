@@ -82,20 +82,11 @@ class Thumbnail < ApplicationRecord
 
   def asset_path
     return nil unless filename.present?
-    "/thumbnails/#{filename}"
+    "https://beastd8ta.com/thumbnails/#{filename}"
   end
 
   def display_url
-    if exists_locally?
       asset_path
-    else
-      # Fallback to original URL if local file doesn't exist
-      url
-    end
-  end
-
-  def exists_locally?
-    filename.present? && File.exist?(local_file_path)
   end
 
   private
