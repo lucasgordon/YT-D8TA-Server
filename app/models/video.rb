@@ -313,11 +313,20 @@ class Video < ApplicationRecord
             }
 
             if existing_thumbnails[video_data["youtube_id"]]
-              existing_thumbnails[video_data["youtube_id"]].update!(thumbnail_attributes)
+              existing_thumbnail = existing_thumbnails[video_data["youtube_id"]]
+              existing_thumbnail.update!(thumbnail_attributes)
+
+              # Only download if we don't already have a local file
+              unless existing_thumbnail.exists_locally?
+                existing_thumbnail.download_thumbnail
+              end
             else
               thumbnail = Thumbnail.find_or_initialize_by(youtube_id: video_data["youtube_id"])
               thumbnail.assign_attributes(thumbnail_attributes)
               thumbnail.save!
+
+              # Download the thumbnail
+              thumbnail.download_thumbnail
             end
           end
 

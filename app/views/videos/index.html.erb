@@ -272,8 +272,9 @@
                 <td class="px-2 py-4 whitespace-nowrap">
                   <div class="flex-shrink-0 h-10 w-18">
                     <% if ranking.video.thumbnails.any? %>
+                      <% thumbnail = ranking.video.thumbnails.first %>
                       <img class="h-12 w-21 rounded-lg object-cover cursor-pointer thumbnail-tooltip" 
-                           src="<%= ranking.video.thumbnails.first.url %>" 
+                           src="<%= thumbnail.display_url %>" 
                            alt="Video thumbnail"
                            data-video-id="<%= ranking.video.youtube_id %>"
                            data-views="<%= number_with_delimiter(ranking.video.view_count) %>"
