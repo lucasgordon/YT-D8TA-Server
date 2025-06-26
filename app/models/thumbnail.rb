@@ -86,11 +86,7 @@ class Thumbnail < ApplicationRecord
   end
 
   def display_url
-    if exists_locally?
       asset_path
-    else
-      url
-    end
   end
 
   def exists_locally?
@@ -100,6 +96,6 @@ class Thumbnail < ApplicationRecord
   private
 
   def thumbnails_directory
-    Rails.root.join("app", "assets", "images", "thumbnails")
+    Rails.root.join("public", "assets", "thumbnails")
   end
 end
