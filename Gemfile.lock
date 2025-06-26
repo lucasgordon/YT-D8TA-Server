@@ -170,6 +170,7 @@ GEM
       net-smtp
     marcel (1.0.4)
     method_source (1.1.0)
+    mini_magick (4.13.2)
     mini_mime (1.1.5)
     minitest (5.25.5)
     msgpack (1.8.0)
@@ -393,6 +394,7 @@ DEPENDENCIES
   jsbundling-rails
   kamal
   kaminari
+  mini_magick (~> 4.12)
   nokogiri (>= 1.12)
   oj (~> 3.16)
   pg (~> 1.1)

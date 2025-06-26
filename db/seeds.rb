@@ -9,7 +9,4 @@
 #   end
 
 # Create default user account
-User.create!(
-  email: 'internaltools@mrbeastyoutube.com',
-  password: 'InternalTools2005'
-)
+
