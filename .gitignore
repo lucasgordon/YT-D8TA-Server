@@ -38,6 +38,13 @@ lib/python_scripts/*
 .env.*
 !.env.example
 
+# YouTube API sensitive files
+lib/python_scripts/youtube_cookies.json
+lib/python_scripts/challenge_url.txt
+lib/python_scripts/*.json
+lib/python_scripts/*_cookies.json
+lib/python_scripts/*_url.txt
+
 lib/python_scripts/chrome_profile/*
 /app/assets/builds/*
 !/app/assets/builds/.keep
